@@ -1,5 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
+<script>
+window.ANIMS = {
+  march:  {{ march_frames  | tojson }},
+  forced: {{ forced_frames | tojson }},
+  rest:   {{ rest_frames   | tojson }},
+  forage: {{ forage_frames | tojson }},
+  clash:  {{ clash_frames  | tojson }},
+};
+window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 500 };
+{% if page_anim_frames %}
+window.PAGE_ANIM_FRAMES = {{ page_anim_frames | tojson }};
+window.PAGE_ANIM_DELAY  = {{ page_anim_delay }};
+{% endif %}
+</script>
 
 {# ── Header ─────────────────────────────────────────────────────────── #}
 <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
@@ -124,16 +138,16 @@
     <div class="box-title">CHOOSE YOUR TACTIC:</div>
     <form method="POST" action="/battle">
       <div class="tactic-grid">
-        <button type="submit" name="tactic" value="1" data-sound="battle">
+        <button type="submit" name="tactic" value="1" data-sound="battle" data-anim="clash">
           [1] CHARGE<br><span style="font-size:11px; color:#7a6a50;">Aggressive assault. Break their lines.</span>
         </button>
-        <button type="submit" name="tactic" value="2" data-sound="battle">
+        <button type="submit" name="tactic" value="2" data-sound="battle" data-anim="clash">
           [2] HOLD THE LINE<br><span style="font-size:11px; color:#7a6a50;">Defensive formation. Protect the column.</span>
         </button>
-        <button type="submit" name="tactic" value="3" data-sound="battle">
+        <button type="submit" name="tactic" value="3" data-sound="battle" data-anim="clash">
           [3] WICKAN FEINT<br><span style="font-size:11px; color:#7a6a50;">Cavalry draws enemy. Column slips through.</span>
         </button>
-        <button type="submit" name="tactic" value="4" data-sound="battle">
+        <button type="submit" name="tactic" value="4" data-sound="battle" data-anim="clash">
           [4] NIGHT ASSAULT<br><span style="font-size:11px; color:#7a6a50;">Strike in darkness. High risk, high reward.</span>
         </button>
       </div>
@@ -146,16 +160,16 @@
     <div class="box-title">ACTIONS</div>
     <form method="POST" action="/action">
       <div class="actions">
-        <button type="submit" name="action" value="march" data-sound="march">
+        <button type="submit" name="action" value="march" data-sound="march" data-anim="march">
           [1] March<br><span style="font-size:11px; color:#7a6a50;">Advance at normal pace</span>
         </button>
-        <button type="submit" name="action" value="forced" data-sound="forced">
+        <button type="submit" name="action" value="forced" data-sound="forced" data-anim="forced">
           [2] Forced March<br><span style="font-size:11px; color:#7a6a50;">2x speed, costs morale &amp; lives</span>
         </button>
-        <button type="submit" name="action" value="rest" data-sound="rest">
+        <button type="submit" name="action" value="rest" data-sound="rest" data-anim="rest">
           [3] Rest<br><span style="font-size:11px; color:#7a6a50;">Recover morale</span>
         </button>
-        <button type="submit" name="action" value="forage" data-sound="forage">
+        <button type="submit" name="action" value="forage" data-sound="forage" data-anim="forage">
           [4] Forage<br><span style="font-size:11px; color:#7a6a50;">Gather food &amp; water</span>
         </button>
       </div>

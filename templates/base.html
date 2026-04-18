@@ -124,7 +124,30 @@
 <div class="container">
 {% block content %}{% endblock %}
 </div>
+
+<div id="anim-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0e0e0e; z-index:9999; align-items:center; justify-content:center;">
+  <pre id="anim-frame" style="color:#c9b99a; font-family:'Courier New',monospace; font-size:15px; line-height:1.5; white-space:pre;"></pre>
+</div>
+
 <script>
+// ── Animation engine ─────────────────────────────────────────────────────────
+function playAnim(frames, delayMs, onDone) {
+  const overlay = document.getElementById('anim-overlay');
+  const frameEl = document.getElementById('anim-frame');
+  overlay.style.display = 'flex';
+  let i = 0;
+  function next() {
+    if (i >= frames.length) {
+      overlay.style.display = 'none';
+      if (onDone) onDone();
+      return;
+    }
+    frameEl.textContent = frames[i++];
+    setTimeout(next, delayMs);
+  }
+  next();
+}
+
 const AC = window.AudioContext || window.webkitAudioContext;
 let ac = null;
 function ctx() { if (!ac) ac = new AC(); return ac; }
@@ -191,12 +214,35 @@ const sounds = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Sounds
   document.querySelectorAll('button, .btn, input[type=submit]').forEach(el => {
     el.addEventListener('click', () => {
       const s = el.dataset.sound || 'click';
       if (sounds[s]) sounds[s]();
     });
   });
+
+  // Button animations: intercept submit, play anim, then submit
+  document.querySelectorAll('[data-anim]').forEach(el => {
+    el.addEventListener('click', function(e) {
+      const animName = this.dataset.anim;
+      if (!window.ANIMS || !window.ANIMS[animName]) return;
+      e.preventDefault();
+      const form = this.closest('form');
+      // Carry the button's name/value since we submit programmatically
+      if (this.name) {
+        let h = form.querySelector('input[name="' + this.name + '"][type="hidden"]');
+        if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.name = this.name; form.appendChild(h); }
+        h.value = this.value;
+      }
+      playAnim(window.ANIMS[animName], window.ANIM_DELAYS[animName], () => form.submit());
+    });
+  });
+
+  // Page-load animation (attack incoming, victory, defeat)
+  if (window.PAGE_ANIM_FRAMES && window.PAGE_ANIM_FRAMES.length) {
+    playAnim(window.PAGE_ANIM_FRAMES, window.PAGE_ANIM_DELAY || 500);
+  }
 });
 </script>
 </body>

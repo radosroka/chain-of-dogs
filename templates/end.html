@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
+<script>
+window.PAGE_ANIM_FRAMES = {{ page_anim_frames | tojson }};
+window.PAGE_ANIM_DELAY  = {{ page_anim_delay }};
+</script>
 
 {% if state.won %}
 <pre style="color:#8a7a60; font-size:13px; line-height:1.5; margin-bottom:16px;">

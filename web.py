@@ -6,6 +6,8 @@ from flask import Flask, session, redirect, url_for, render_template, request
 
 from game_state import GameState, WAYPOINTS, TOTAL_DIST
 from events import EventSystem
+from ui import (_MARCH_FRAMES, _FORCED_FRAMES, _REST_FRAMES, _FORAGE_FRAMES,
+                _CLASH_FRAMES, _VICTORY_FRAMES, _DEFEAT_FRAMES, _build_attack_frames)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'chain-of-dogs-local-secret')
@@ -90,8 +92,22 @@ def game():
     state = get_state()
     if state.game_over:
         return redirect(url_for('end'))
+
+    page_anim_frames = None
+    page_anim_delay = 600
+    if state.pending_battle:
+        pb = state.pending_battle
+        page_anim_frames = _build_attack_frames(pb['name'], pb['enemy_size'], state.soldiers)
+
     return render_template('game.html', state=state, name=session.get('name', ''),
-                           waypoints=WAYPOINTS, total_dist=TOTAL_DIST)
+                           waypoints=WAYPOINTS, total_dist=TOTAL_DIST,
+                           march_frames=_MARCH_FRAMES,
+                           forced_frames=_FORCED_FRAMES,
+                           rest_frames=_REST_FRAMES,
+                           forage_frames=_FORAGE_FRAMES,
+                           clash_frames=_CLASH_FRAMES,
+                           page_anim_frames=page_anim_frames,
+                           page_anim_delay=page_anim_delay)
 
 
 @app.route('/action', methods=['POST'])
@@ -155,9 +171,13 @@ def end():
     name = session.get('name', 'Unknown')
     score = calc_score(state)
     rank, scores = save_score(name, score, state.won)
+    end_anim = _VICTORY_FRAMES if state.won else _DEFEAT_FRAMES
+    end_delay = 900 if state.won else 1100
     session.clear()
     return render_template('end.html', state=state, name=name,
-                           score=score, rank=rank, scores=scores[:10])
+                           score=score, rank=rank, scores=scores[:10],
+                           page_anim_frames=end_anim,
+                           page_anim_delay=end_delay)
 
 
 if __name__ == '__main__':
