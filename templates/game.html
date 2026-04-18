@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
-<script>
+<script type="application/json" id="page-meta">
+{
+  "track": "{{ 'battle' if state.pending_battle else 'ambient' }}",
+  "animFrames": {{ page_anim_frames | tojson if page_anim_frames else 'null' }},
+  "animDelay":  {{ page_anim_delay }}
+}
+</script>
+
+<script data-page>
 window.ANIMS = {
   march:  {{ march_frames  | tojson }},
   forced: {{ forced_frames | tojson }},
@@ -9,10 +17,6 @@ window.ANIMS = {
   clash:  {{ clash_frames  | tojson }},
 };
 window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 500 };
-{% if page_anim_frames %}
-window.PAGE_ANIM_FRAMES = {{ page_anim_frames | tojson }};
-window.PAGE_ANIM_DELAY  = {{ page_anim_delay }};
-{% endif %}
 </script>
 
 {# ── Header ─────────────────────────────────────────────────────────── #}

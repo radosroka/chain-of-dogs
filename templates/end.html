@@ -1,8 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
-<script>
-window.PAGE_ANIM_FRAMES = {{ page_anim_frames | tojson }};
-window.PAGE_ANIM_DELAY  = {{ page_anim_delay }};
+<script type="application/json" id="page-meta">
+{
+  "track": null,
+  "animFrames": {{ page_anim_frames | tojson }},
+  "animDelay":  {{ page_anim_delay }}
+}
 </script>
 
 {% if state.won %}

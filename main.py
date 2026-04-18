@@ -7,6 +7,7 @@ from game_state import GameState
 from events import EventSystem
 from ui import UI, clear
 import sounds
+import music
 
 DB_FILE = os.path.join(os.path.dirname(__file__), 'scores.db')
 
@@ -74,6 +75,8 @@ def main():
     ui = UI()
     name = ui.ask_name()
     sounds.play_start()
+    music.generate_all()
+    music.play_ambient()
 
     state = GameState()
     events = EventSystem(state)
@@ -113,6 +116,7 @@ def main():
 
         if event.type == 'attack':
             sounds.play_danger()
+            music.play_battle()
             ui.anim_attack_incoming(event.data['name'], event.data['enemy_size'], state.soldiers)
             tactic = ui.render_battle(state, event.data['enemy_size'], event.data['name'])
             ui.anim_battle_clash()
@@ -122,6 +126,7 @@ def main():
             ui.render_battle_result(state, result)
             input("\n  [Press Enter to continue...]")
             state.check_loss()
+            music.play_ambient()
 
         elif event.type != 'nothing':
             msg = event.data.get('message', '')
@@ -132,6 +137,7 @@ def main():
     score = calc_score(state)
     rank, scores = save_score(name, score, state.won)
 
+    music.stop()
     if state.won:
         ui.anim_victory()
         sounds.play_victory()

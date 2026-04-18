@@ -105,9 +105,6 @@
   .scores .win-badge { color: #a8c880; }
 
   /* battle */
-  .force-bar { height: 16px; background: #3a1a1a; margin: 4px 0; display: flex; align-items: center; }
-  .force-fill-enemy { background: #8b2020; height: 100%; }
-  .force-fill-player { background: #2a5a8b; height: 100%; }
   .tactic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 
   /* result */
@@ -115,22 +112,27 @@
   .result-defeat  { color: #cc6666; font-size: 18px; letter-spacing: 2px; }
 
   .status-info { color: #7a6a50; font-size: 13px; }
-
   .warn-text { color: #cc4444; }
   .good-text { color: #a8c880; }
 </style>
 </head>
 <body>
-<div class="container">
-{% block content %}{% endblock %}
-</div>
 
+<!-- Persistent audio — lives outside .container, never swapped out -->
+<audio id="bg-music" loop preload="auto" style="display:none;"></audio>
+
+<!-- Animation overlay -->
 <div id="anim-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0e0e0e; z-index:9999; align-items:center; justify-content:center;">
   <pre id="anim-frame" style="color:#c9b99a; font-family:'Courier New',monospace; font-size:15px; line-height:1.5; white-space:pre;"></pre>
 </div>
 
+<!-- Swappable page content -->
+<div id="page-root" class="container">
+{% block content %}{% endblock %}
+</div>
+
 <script>
-// ── Animation engine ─────────────────────────────────────────────────────────
+// ── Animation engine ──────────────────────────────────────────────────────────
 function playAnim(frames, delayMs, onDone) {
   const overlay = document.getElementById('anim-overlay');
   const frameEl = document.getElementById('anim-frame');
@@ -148,18 +150,10 @@ function playAnim(frames, delayMs, onDone) {
   next();
 }
 
+// ── Sound engine ──────────────────────────────────────────────────────────────
 const AC = window.AudioContext || window.webkitAudioContext;
 let ac = null;
 function ctx() { if (!ac) ac = new AC(); return ac; }
-
-function tone(freq, type, vol, dur) {
-  const c = ctx(), o = c.createOscillator(), g = c.createGain();
-  o.connect(g); g.connect(c.destination);
-  o.type = type; o.frequency.setValueAtTime(freq, c.currentTime);
-  g.gain.setValueAtTime(vol, c.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
-  o.start(c.currentTime); o.stop(c.currentTime + dur);
-}
 
 function sweep(f0, f1, type, vol, dur) {
   const c = ctx(), o = c.createOscillator(), g = c.createGain();
@@ -171,17 +165,22 @@ function sweep(f0, f1, type, vol, dur) {
   g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
   o.start(c.currentTime); o.stop(c.currentTime + dur);
 }
-
+function tone(freq, type, vol, dur) {
+  const c = ctx(), o = c.createOscillator(), g = c.createGain();
+  o.connect(g); g.connect(c.destination);
+  o.type = type; o.frequency.setValueAtTime(freq, c.currentTime);
+  g.gain.setValueAtTime(vol, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+  o.start(c.currentTime); o.stop(c.currentTime + dur);
+}
 function noise(vol, dur, lowpass) {
   const c = ctx();
   const len = Math.ceil(c.sampleRate * dur);
   const buf = c.createBuffer(1, len, c.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1);
-  const src = c.createBufferSource();
-  src.buffer = buf;
-  const filt = c.createBiquadFilter();
-  filt.type = 'lowpass'; filt.frequency.value = lowpass;
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource(); src.buffer = buf;
+  const filt = c.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = lowpass;
   const g = c.createGain();
   g.gain.setValueAtTime(vol, c.currentTime);
   g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
@@ -190,58 +189,128 @@ function noise(vol, dur, lowpass) {
 }
 
 const sounds = {
-  click:  () => { sweep(900, 400, 'sine', 0.15, 0.07); },
-  march:  () => { sweep(140, 70,  'sine', 0.35, 0.18); noise(0.05, 0.12, 300); },
-  forced: () => {
-    sweep(160, 60, 'sine', 0.4, 0.15);
-    noise(0.08, 0.15, 400);
-    setTimeout(() => sweep(140, 55, 'sine', 0.3, 0.13), 120);
-  },
+  click:  () => sweep(900, 400, 'sine', 0.15, 0.07),
+  march:  () => { sweep(140, 70, 'sine', 0.35, 0.18); noise(0.05, 0.12, 300); },
+  forced: () => { sweep(160, 60, 'sine', 0.4, 0.15); noise(0.08, 0.15, 400);
+                  setTimeout(() => sweep(140, 55, 'sine', 0.3, 0.13), 120); },
   rest:   () => { sweep(520, 660, 'sine', 0.12, 0.25); tone(440, 'sine', 0.07, 0.4); },
   forage: () => { noise(0.12, 0.2, 1200); sweep(300, 500, 'triangle', 0.08, 0.2); },
-  battle: () => {
-    noise(0.3, 0.08, 3000);
-    sweep(200, 80, 'sawtooth', 0.2, 0.25);
-    setTimeout(() => { noise(0.2, 0.06, 2500); sweep(180, 70, 'sawtooth', 0.15, 0.2); }, 80);
-    setTimeout(() => sweep(600, 200, 'square', 0.1, 0.15), 150);
-  },
-  danger: () => { sweep(300, 150, 'sawtooth', 0.2, 0.3); },
-  start:  () => {
-    sweep(330, 440, 'sine', 0.12, 0.15);
-    setTimeout(() => sweep(440, 550, 'sine', 0.1, 0.15), 140);
-    setTimeout(() => sweep(550, 660, 'sine', 0.08, 0.2), 280);
-  },
+  battle: () => { noise(0.3, 0.08, 3000); sweep(200, 80, 'sawtooth', 0.2, 0.25);
+                  setTimeout(() => { noise(0.2, 0.06, 2500); sweep(180, 70, 'sawtooth', 0.15, 0.2); }, 80);
+                  setTimeout(() => sweep(600, 200, 'square', 0.1, 0.15), 150); },
+  danger: () => sweep(300, 150, 'sawtooth', 0.2, 0.3),
+  start:  () => { sweep(330, 440, 'sine', 0.12, 0.15);
+                  setTimeout(() => sweep(440, 550, 'sine', 0.1, 0.15), 140);
+                  setTimeout(() => sweep(550, 660, 'sine', 0.08, 0.2), 280); },
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+// ── Audio track management ────────────────────────────────────────────────────
+function _audioTrack(track) {
+  const aud = document.getElementById('bg-music');
+  if (!aud) return;
+  if (!track) { aud.pause(); return; }
+  const want = '/music/' + track + '.ogg';
+  // normalise aud.src (browser makes it absolute)
+  const cur = aud.src ? new URL(aud.src).pathname : '';
+  if (cur !== want) {
+    aud.src = want;
+    aud.load();
+  }
+  aud.play().then(() => sessionStorage.setItem('audioUnlocked', '1')).catch(() => {});
+}
+
+// ── SPA navigation ────────────────────────────────────────────────────────────
+function _pageData() {
+  const el = document.getElementById('page-meta');
+  if (!el) return null;
+  try { return JSON.parse(el.textContent); } catch(e) { return null; }
+}
+
+function _applyPage(html, url) {
+  const parser = new DOMParser();
+  const nd = parser.parseFromString(html, 'text/html');
+
+  // Swap content
+  const root = document.getElementById('page-root');
+  const newRoot = nd.getElementById('page-root');
+  if (root && newRoot) root.innerHTML = newRoot.innerHTML;
+
+  // Re-run page-specific scripts
+  nd.querySelectorAll('script[data-page]').forEach(s => {
+    try { (new Function(s.textContent))(); } catch(e) { console.warn(e); }
+  });
+
+  // Update audio track
+  const pd = _pageData();
+  if (pd && pd.track) {
+    _audioTrack(pd.track);
+  } else {
+    document.getElementById('bg-music').pause();
+  }
+
+  // Page-load animation
+  if (pd && pd.animFrames && pd.animFrames.length) {
+    playAnim(pd.animFrames, pd.animDelay || 500);
+  }
+
+  history.pushState({}, '', url);
+  window.scrollTo(0, 0);
+}
+
+async function _fetchPage(url, method, formData) {
+  try {
+    const resp = await fetch(url, { method, body: formData, redirect: 'follow' });
+    return { html: await resp.text(), url: resp.url };
+  } catch(e) { return null; }
+}
+
+// ── Event delegation (sounds + animated form buttons) ────────────────────────
+document.addEventListener('click', function(e) {
   // Sounds
-  document.querySelectorAll('button, .btn, input[type=submit]').forEach(el => {
-    el.addEventListener('click', () => {
-      const s = el.dataset.sound || 'click';
-      if (sounds[s]) sounds[s]();
-    });
-  });
+  const soundEl = e.target.closest('[data-sound]');
+  if (soundEl && sounds[soundEl.dataset.sound]) sounds[soundEl.dataset.sound]();
 
-  // Button animations: intercept submit, play anim, then submit
-  document.querySelectorAll('[data-anim]').forEach(el => {
-    el.addEventListener('click', function(e) {
-      const animName = this.dataset.anim;
-      if (!window.ANIMS || !window.ANIMS[animName]) return;
-      e.preventDefault();
-      const form = this.closest('form');
-      // Carry the button's name/value since we submit programmatically
-      if (this.name) {
-        let h = form.querySelector('input[name="' + this.name + '"][type="hidden"]');
-        if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.name = this.name; form.appendChild(h); }
-        h.value = this.value;
+  // Unlock music on any click
+  if (sessionStorage.getItem('audioUnlocked')) {
+    const aud = document.getElementById('bg-music');
+    if (aud && aud.src && aud.paused) aud.play().catch(() => {});
+  }
+
+  // Animated buttons — fetch in background, swap content after animation
+  const btn = e.target.closest('button[data-anim]');
+  if (!btn || !window.ANIMS || !window.ANIMS[btn.dataset.anim]) return;
+  e.preventDefault();
+  const form = btn.closest('form');
+  if (!form) return;
+
+  const fd = new FormData(form);
+  if (btn.name) fd.set(btn.name, btn.value);
+
+  // Fire fetch immediately (runs in parallel with animation)
+  const fetching = _fetchPage(form.action, form.method || 'POST', fd);
+
+  playAnim(window.ANIMS[btn.dataset.anim], window.ANIM_DELAYS[btn.dataset.anim], async () => {
+    const result = await fetching;
+    if (result) {
+      _applyPage(result.html, result.url);
+    } else {
+      // fallback: real submit
+      if (btn.name) {
+        let h = form.querySelector('input[name="' + btn.name + '"][type=hidden]');
+        if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.name = btn.name; form.appendChild(h); }
+        h.value = btn.value;
       }
-      playAnim(window.ANIMS[animName], window.ANIM_DELAYS[animName], () => form.submit());
-    });
+      form.submit();
+    }
   });
+});
 
-  // Page-load animation (attack incoming, victory, defeat)
-  if (window.PAGE_ANIM_FRAMES && window.PAGE_ANIM_FRAMES.length) {
-    playAnim(window.PAGE_ANIM_FRAMES, window.PAGE_ANIM_DELAY || 500);
+// ── On first load ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const pd = _pageData();
+  if (pd) {
+    if (pd.track && sessionStorage.getItem('audioUnlocked')) _audioTrack(pd.track);
+    if (pd.animFrames && pd.animFrames.length) playAnim(pd.animFrames, pd.animDelay || 500);
   }
 });
 </script>

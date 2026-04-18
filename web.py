@@ -8,6 +8,7 @@ from game_state import GameState, WAYPOINTS, TOTAL_DIST
 from events import EventSystem
 from ui import (_MARCH_FRAMES, _FORCED_FRAMES, _REST_FRAMES, _FORAGE_FRAMES,
                 _CLASH_FRAMES, _VICTORY_FRAMES, _DEFEAT_FRAMES, _build_attack_frames)
+import music
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'chain-of-dogs-local-secret')
@@ -65,6 +66,16 @@ def get_state():
 
 def save_state(state):
     session['state'] = state.to_dict()
+
+
+@app.route('/music/<track>.ogg')
+def serve_music(track):
+    from flask import send_file
+    paths = {'ambient': music.AMBIENT_OGG, 'battle': music.BATTLE_OGG}
+    path = paths.get(track)
+    if not path or not os.path.exists(path):
+        return '', 404
+    return send_file(path, mimetype='audio/ogg')
 
 
 @app.route('/')
@@ -181,4 +192,6 @@ def end():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    import threading
+    threading.Thread(target=music.generate_all, daemon=True).start()
+    app.run(debug=True, port=5000, use_reloader=False)
