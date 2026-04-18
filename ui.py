@@ -1,4 +1,5 @@
 import os
+import time
 
 from game_state import WAYPOINTS, TOTAL_DIST
 
@@ -292,6 +293,41 @@ class UI:
         self._show_leaderboard(scores, rank)
         input("\n  [Press Enter...]")
 
+    # ── Animations ──────────────────────────────────────────────────────
+
+    def _play(self, frames, delay=0.13):
+        for frame in frames:
+            clear()
+            print(frame)
+            time.sleep(delay)
+
+    def anim_march(self):
+        self._play(_MARCH_FRAMES, delay=0.55)
+
+    def anim_forced_march(self):
+        self._play(_FORCED_FRAMES, delay=0.45)
+
+    def anim_rest(self):
+        self._play(_REST_FRAMES, delay=0.70)
+
+    def anim_forage(self):
+        self._play(_FORAGE_FRAMES, delay=0.65)
+
+    def anim_attack_incoming(self, enemy_name, enemy_size, soldiers):
+        frames = _build_attack_frames(enemy_name, enemy_size, soldiers)
+        self._play(frames, delay=0.60)
+
+    def anim_battle_clash(self):
+        self._play(_CLASH_FRAMES, delay=0.50)
+
+    def anim_victory(self):
+        self._play(_VICTORY_FRAMES, delay=0.90)
+
+    def anim_defeat(self):
+        self._play(_DEFEAT_FRAMES, delay=1.10)
+
+    # ── Leaderboard ─────────────────────────────────────────────────────
+
     def _show_leaderboard(self, scores, highlight_rank):
         print()
         print("  " + "-" * 50)
@@ -302,3 +338,392 @@ class UI:
             outcome = "WIN" if entry.get('won') else "   "
             print(f"  {i+1:>2}. {outcome} {entry['name']:<20} {entry['score']:>8,}{marker}")
         print("  " + "-" * 50)
+
+
+# ── ASCII animation frames ───────────────────────────────────────────────────
+
+_MARCH_FRAMES = [
+r"""
+  THE COLUMN ADVANCES...
+
+       o   o   o   o   o   o   o   o   o   o   o   o
+      /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\
+      /   /   /   /   /   /   /   /   /   /   /   /
+
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+         refugees  refugees  refugees  refugees
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
+                                                  --->
+""",
+r"""
+  THE COLUMN ADVANCES...
+
+       o   o   o   o   o   o   o   o   o   o   o   o
+       |\  |\  |\  |\  |\  |\  |\  |\  |\  |\  |\  |\
+        \   \   \   \   \   \   \   \   \   \   \   \
+
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+         refugees  refugees  refugees  refugees
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
+                                                   --->
+""",
+r"""
+  THE COLUMN ADVANCES...
+
+       o   o   o   o   o   o   o   o   o   o   o   o
+      /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\
+      /   /   /   /   /   /   /   /   /   /   /   /
+
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+         refugees  refugees  refugees  refugees
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
+                                                    --->
+""",
+]
+
+_FORCED_FRAMES = [
+r"""
+  FORCED MARCH!  PUSH ON!
+
+       o  o  o  o  o  o  o  o  o  o  o  o  o  o
+      /|>/|>/|>/|>/|>/|>/|>/|>/|>/|>/|>/|>/|>/|>
+      /  /  /  /  /  /  /  /  /  /  /  /  /  /
+
+     ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+       refugees stumbling  refugees stumbling
+     ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+
+                                             ===>===>
+""",
+r"""
+  FORCED MARCH!  PUSH ON!
+
+      o  o  o  o  o  o  o  o  o  o  o  o  o  o
+     >|\ >|\ >|\ >|\ >|\ >|\ >|\ >|\ >|\ >|\ >\
+       \   \   \   \   \   \   \   \   \   \   \
+
+     ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+       refugees stumbling  refugees stumbling
+     ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+
+                                              ===>===>
+""",
+r"""
+  FORCED MARCH!  PUSH ON!
+
+       o  o  o  o  o  o  o  o  o  o  o  o  o  o
+      /|>/|>/|>/|>/|>/|>/|>/|>/|>/|>/|>/|>/|>/|>
+      /  /  /  /  /  /  /  /  /  /  /  /  /  /
+
+     ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+       refugees stumbling  refugees stumbling
+     ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~ ~~
+
+                                               ===>===>
+""",
+]
+
+_REST_FRAMES = [
+r"""
+  THE COLUMN RESTS...
+
+       o   o   o   o   o   o   o   o   o
+       |   |   |   |   |   |   |   |   |     z
+      /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\
+       |   |   |   |   |   |   |   |   |
+      / \ / \ / \ / \ / \ / \ / \ / \ / \
+
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+           refugees  resting  at  ease
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+""",
+r"""
+  THE COLUMN RESTS...
+
+       o   o   o   o   o   o   o   o   o
+       |   |   |   |   |   |   |   |   |      z z
+      /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\
+       |   |   |   |   |   |   |   |   |
+      / \ / \ / \ / \ / \ / \ / \ / \ / \
+
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+           refugees  resting  at  ease
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+""",
+r"""
+  THE COLUMN RESTS...
+
+       o   o   o   o   o   o   o   o   o
+       |   |   |   |   |   |   |   |   |    z  Z  z
+      /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\
+       |   |   |   |   |   |   |   |   |
+      / \ / \ / \ / \ / \ / \ / \ / \ / \
+
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+           refugees  resting  at  ease
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+""",
+]
+
+_FORAGE_FRAMES = [
+r"""
+  FORAGING PARTIES SENT OUT...
+
+       o   o   o            o   o   o
+       |   |   |            |   |   |
+      /|\ /|\ /|\          /|\ /|\ /|\
+                \          /
+                 \        /
+                  \      /
+            o      \    /      o
+           /|\      \  /      /|\
+                   [cache]
+""",
+r"""
+  FORAGING PARTIES RETURN...
+
+       o   o   o            o   o   o
+       |   |   |            |   |   |
+      /|\ /|\ /|\          /|\ /|\ /|\
+              \                /
+               \              /
+                \            /
+          o      \__[FOOD]__/      o
+         /|\         [H2O]        /|\
+""",
+r"""
+  SUPPLIES SECURED!
+
+       o   o   o   o   o   o   o   o
+       |   |   |   |   |   |   |   |
+      /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\
+
+              [FOOD]  [FOOD]  [H2O]
+              ~~~~~~  ~~~~~~  ~~~~~
+
+      The column's spirits lift briefly.
+""",
+]
+
+
+def _build_attack_frames(enemy_name, enemy_size, soldiers):
+    bar_e = max(1, min(36, int(enemy_size / max(enemy_size, soldiers, 1) * 36)))
+    bar_p = max(1, min(36, int(soldiers   / max(enemy_size, soldiers, 1) * 36)))
+    e_bar = '#' * bar_e + '·' * (36 - bar_e)
+    p_bar = '+' * bar_p + '·' * (36 - bar_p)
+
+    return [
+        f"""
+  !! ATTACK !!
+
+  {enemy_name}
+
+  ENEMY  [{e_bar}]  {enemy_size:,}
+  YOURS  [{p_bar}]  {soldiers:,}
+
+  >>>>>>>>                        <<<<<<<<
+  >7th  >>           VS           <<rebel<
+  >>>>>>>>                        <<<<<<<<
+
+  The desert shakes with the thunder of hooves.
+""",
+        f"""
+  !! ATTACK !!
+
+  {enemy_name}
+
+  ENEMY  [{e_bar}]  {enemy_size:,}
+  YOURS  [{p_bar}]  {soldiers:,}
+
+       >>>>>>>>              <<<<<<<<
+       >7th  >>      VS      <<rebel<
+       >>>>>>>>              <<<<<<<<
+
+  Wickan outriders gallop to meet the threat.
+""",
+        f"""
+  !! ATTACK !!
+
+  {enemy_name}
+
+  ENEMY  [{e_bar}]  {enemy_size:,}
+  YOURS  [{p_bar}]  {soldiers:,}
+
+              >>>>>>>>  <<<<<<<<
+              >7th  >>  <<rebel<
+              >>>>>>>>  <<<<<<<<
+
+  CHOOSE YOUR TACTIC!
+""",
+    ]
+
+
+_CLASH_FRAMES = [
+r"""
+
+
+              >>>>>>>>  <<<<<<<<
+              >7th  >>  <<rebel<
+              >>>>>>>>  <<<<<<<<
+
+
+""",
+r"""
+
+                  >>X<<
+                 >> X <<
+                >>> X <<<
+                 >> X <<
+                  >>X<<
+
+""",
+r"""
+
+                    *
+                  * | *
+                *--\|/--*
+                   /|\
+                *--/|\--*
+                  * | *
+                    *
+
+         S  W  O  R  D  S     C L A S H
+""",
+r"""
+
+             *    *   *    *    *
+           *    *    *   *    *   *
+         *   *    * * * * *    *    *
+           *    *   * X *    *    *
+         *   *   *   * *   *   *   *
+           *     *   *   *    *   *
+             *    *   *    *    *
+
+""",
+r"""
+
+            .   .   .   .   .   .
+          .   .   .   .   .   .   .
+            .   .   .   .   .   .
+
+         The dust begins to settle...
+
+            .   .   .   .   .   .
+""",
+]
+
+_VICTORY_FRAMES = [
+r"""
+
+      THE WALLS OF AREN...
+
+                 |    |
+      |          |    |          |
+      |   /\     |    |     /\   |
+      |  /  \    |    |    /  \  |
+      | /    \   |    |   /    \ |
+      |/      \  |    |  /      \|
+      |        \ |    | /        |
+      |____    |\|    |/|    ____|
+      |    |   | ==== |   |    |
+      |    |   |      |   |    |
+""",
+r"""
+
+      THE GATES OF AREN...
+
+                 |    |
+      |          | !! |          |
+      |   /\     |    |     /\   |
+      |  /  \    |    |    /  \  |
+      | /    \  /|    |\   /    \|
+      |/      \/  \  /  \ /      |
+      |        \   \/    /       |
+      |____     \  /\   /   _____|
+      |    |    \/    \/   |    |
+      |    |               |    |
+""",
+r"""
+
+      THE GATES OPEN!
+
+      |          |      |          |
+      |   /\     |      |     /\   |
+      |  /  \    |      |    /  \  |
+      | /    \   |      |   /    \ |
+      |/      \  |      |  /      \|
+      |________\ |      | /________|
+      |    |    \|      |/    |    |
+      |    |     \      /     |    |
+      |    |      \    /      |    |
+""",
+r"""
+
+      THE COLUMN ENTERS AREN!
+
+      |          |  >>  |          |
+      |   /\     | >>>  |     /\   |
+      |  /  \    |>>>   |    /  \  |
+      | /    \   |>>    |   /    \ |
+      |/      \  |>  >> |  /      \|
+      |________\ | >>>> | /________|
+      |    |    \|      |/    |    |
+      |    |      >>>>>>      |    |
+      |    |      >>>>>>      |    |
+
+      T H E   C H A I N   H O L D S .
+""",
+]
+
+_DEFEAT_FRAMES = [
+r"""
+  THE CHAIN STRAINS...
+
+       o   o   o   o   o   o   o   o   o   o   o   o
+       |   |   |   |   |   |   |   |   |   |   |   |
+      /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\ /|\
+       |   |   |   |   |   |   |   |   |   |   |   |
+      / \ / \ / \ / \ / \ / \ / \ / \ / \ / \ / \ / \
+
+      ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+""",
+r"""
+  THE CHAIN BREAKS...
+
+       o       o   o       o   o       o       o
+       |       |   |       |   |       |       |
+      /|\     /|\ /|\     /|\ /|\     /|\     /|\
+                               |
+      / \     / \ / \     / \ / \     / \     / \
+
+      ~  ~         ~  ~         ~  ~         ~  ~
+""",
+r"""
+  THE MARCH ENDS...
+
+       o               o               o
+       |               |               |
+      /|\             /|\             /|\
+
+
+
+      ~                   ~                   ~
+""",
+r"""
+
+         .               .               .
+
+
+                 .               .
+
+
+         .               .               .
+
+
+      The desert swallows all trace of the column.
+      Coltaine has failed.
+""",
+]

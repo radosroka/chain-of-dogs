@@ -93,6 +93,16 @@ def main():
 
         ACTION_SOUNDS.get(action, sounds.play_click)()
 
+        # Play action animation
+        if action == 'march':
+            ui.anim_march()
+        elif action == 'forced':
+            ui.anim_forced_march()
+        elif action == 'rest':
+            ui.anim_rest()
+        elif action == 'forage':
+            ui.anim_forage()
+
         event = events.process_day(action)
 
         if state.game_over:
@@ -103,8 +113,9 @@ def main():
 
         if event.type == 'attack':
             sounds.play_danger()
-            clear()
+            ui.anim_attack_incoming(event.data['name'], event.data['enemy_size'], state.soldiers)
             tactic = ui.render_battle(state, event.data['enemy_size'], event.data['name'])
+            ui.anim_battle_clash()
             sounds.play_battle()
             result = events.resolve_battle(tactic, event.data['enemy_size'])
             clear()
@@ -122,9 +133,11 @@ def main():
     rank, scores = save_score(name, score, state.won)
 
     if state.won:
+        ui.anim_victory()
         sounds.play_victory()
         ui.show_victory(state, score, rank, scores)
     else:
+        ui.anim_defeat()
         sounds.play_defeat()
         ui.show_defeat(state, score, rank, scores)
 
