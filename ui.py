@@ -80,9 +80,16 @@ DEFEAT_ART = """
 
 
 class UI:
-    def show_intro(self):
+    def ask_name(self):
         clear()
         print(INTRO_TEXT)
+        while True:
+            name = input("  Enter your name, Fist: ").strip()
+            if name:
+                return name
+            print("  A name is required.")
+
+    def show_intro(self):
         input("  [Press Enter to begin the march...]")
 
     def render(self, state):
@@ -251,7 +258,7 @@ class UI:
         print(f"\n  >>> {message} <<<")
         input("\n  [Press Enter to continue...]")
 
-    def show_victory(self, state):
+    def show_victory(self, state, score, rank, scores):
         clear()
         print(VICTORY_ART)
         print(f"  Days marched:      {state.day}")
@@ -260,6 +267,7 @@ class UI:
         print(f"  Soldiers lost:     {state.total_soldiers_lost:,}")
         pct = state.refugees / max(1, state.refugees + state.total_refugees_lost) * 100
         print(f"  Survival rate:     {pct:.1f}%")
+        print(f"  Score:             {score:,}")
         print()
         if pct > 80:
             print("  A masterful campaign. Coltaine's legend is secure.")
@@ -267,16 +275,30 @@ class UI:
             print("  A costly victory. But the refugees live.")
         else:
             print("  The gates open. The price was terrible. But they made it.")
+        self._show_leaderboard(scores, rank)
         input("\n  [Press Enter...]")
 
-    def show_defeat(self, state):
+    def show_defeat(self, state, score, rank, scores):
         clear()
         print(DEFEAT_ART)
         print(f"  Days marched:   {state.day}")
         print(f"  Refugees alive: {state.refugees:,}")
         print(f"  Refugees lost:  {state.total_refugees_lost:,}")
+        print(f"  Score:          {score:,}")
         print()
         print("  Final log:")
         for entry in state.log[:4]:
             print(f"    {entry}")
+        self._show_leaderboard(scores, rank)
         input("\n  [Press Enter...]")
+
+    def _show_leaderboard(self, scores, highlight_rank):
+        print()
+        print("  " + "-" * 50)
+        print("  HIGH SCORES")
+        print("  " + "-" * 50)
+        for i, entry in enumerate(scores[:10]):
+            marker = " <--" if i == highlight_rank else ""
+            outcome = "WIN" if entry.get('won') else "   "
+            print(f"  {i+1:>2}. {outcome} {entry['name']:<20} {entry['score']:>8,}{marker}")
+        print("  " + "-" * 50)

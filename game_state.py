@@ -27,6 +27,35 @@ class GameState:
         self.log = []
         self.total_refugees_lost = 0
         self.total_soldiers_lost = 0
+        self.pending_battle = None   # {'enemy_size': int, 'name': str} when awaiting tactic
+        self.last_battle_result = None  # shown once after battle resolves
+
+    def to_dict(self):
+        return {
+            'day': self.day,
+            'soldiers': self.soldiers,
+            'refugees': self.refugees,
+            'food': self.food,
+            'water': self.water,
+            'morale': self.morale,
+            'waypoint_idx': self.waypoint_idx,
+            'days_traveled': self.days_traveled,
+            'enemy_strength': self.enemy_strength,
+            'game_over': self.game_over,
+            'won': self.won,
+            'log': self.log,
+            'total_refugees_lost': self.total_refugees_lost,
+            'total_soldiers_lost': self.total_soldiers_lost,
+            'pending_battle': self.pending_battle,
+            'last_battle_result': self.last_battle_result,
+        }
+
+    @classmethod
+    def from_dict(cls, d):
+        obj = cls.__new__(cls)
+        for k, v in d.items():
+            setattr(obj, k, v)
+        return obj
 
     @property
     def current_waypoint(self):

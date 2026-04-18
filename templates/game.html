@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block content %}
+
+{# ── Header ─────────────────────────────────────────────────────────── #}
+<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+  <h2 style="font-size:16px;">CHAIN OF DOGS &mdash; THE MARCH TO AREN</h2>
+  <span style="color:#7a6a50; font-size:13px;">{{ name }} &nbsp;|&nbsp; Day {{ state.day }}</span>
+</div>
+
+{# ── Map ─────────────────────────────────────────────────────────────── #}
+{% set MAP_W = 62 %}
+{% set n = waypoints|length - 1 %}
+{% set overall = state.overall_progress %}
+{% set player_col = [MAP_W, (overall * MAP_W)|int]|min %}
+
+<div class="box" style="padding:12px 16px;">
+  <div style="font-family: monospace; font-size: 13px; letter-spacing:0;">
+    {# Map line #}
+    <div style="white-space:pre;">  {% for col in range(MAP_W + 1) %}{% set wp_here = namespace(idx=-1) %}{% for i in range(waypoints|length) %}{% if (i / n * MAP_W)|round|int == col %}{% set wp_here.idx = i %}{% endif %}{% endfor %}{% if col == player_col %}<span style="color:#f0d060;">^</span>{% elif wp_here.idx >= 0 %}{% if wp_here.idx <= state.waypoint_idx %}<span style="color:#c9b99a;">*</span>{% else %}<span style="color:#3a3228;">o</span>{% endif %}{% elif col < player_col %}<span style="color:#7a6a50;">=</span>{% else %}<span style="color:#2a2220;">-</span>{% endif %}{% endfor %}</div>
+
+    {# Waypoint labels #}
+    {% set label_cols = [] %}
+    {% for wp in waypoints %}
+      {% set col = ((loop.index0 / n) * MAP_W)|round|int + 2 %}
+      {% set _ = label_cols.append({'col': col, 'name': wp.short, 'reached': loop.index0 <= state.waypoint_idx}) %}
+    {% endfor %}
+    <div style="position:relative; height:16px; white-space:nowrap; overflow:hidden;">
+      {% for lc in label_cols %}
+      <span style="position:absolute; left:{{ lc.col * 8 }}px; font-size:11px; color:{% if lc.reached %}#8a7a60{% else %}#3a3228{% endif %}; transform:translateX(-50%);">{{ lc.name }}</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div style="font-size:12px; color:#6a5a40; margin-top:6px;">
+    {% if state.next_waypoint %}
+      {{ state.current_waypoint.name }} &nbsp;&rarr;&nbsp; {{ state.next_waypoint.name }}
+      &nbsp;&nbsp;({{ state.next_waypoint.dist - state.days_traveled }} march-days away)
+    {% else %}
+      Location: {{ state.current_waypoint.name }}
+    {% endif %}
+  </div>
+</div>
+
+{# ── Status ───────────────────────────────────────────────────────────── #}
+<div class="box">
+  <div class="box-title">STATUS</div>
+
+  {% macro bar_row(label, val, maxv, suffix='', invert=false) %}
+  {% set pct = [100, (val / maxv * 100)|int]|min %}
+  {% set is_low = pct <= 20 %}
+  <div class="bar-row">
+    <span class="bar-label">{{ label }}</span>
+    <div class="bar-track">
+      <div class="bar-fill {% if is_low %}warn{% endif %}" style="width:{{ pct }}%;"></div>
+    </div>
+    <span class="bar-val">{{ "{:,}".format(val) }}{{ suffix }}</span>
+    <span class="bar-warn">{% if is_low %}(!){% endif %}</span>
+  </div>
+  {% endmacro %}
+
+  {{ bar_row("Soldiers",  state.soldiers, 3200) }}
+  {{ bar_row("Refugees",  state.refugees, 50000) }}
+  {{ bar_row("Food",      state.food,     30, " days") }}
+  {{ bar_row("Water",     state.water,    10, " days") }}
+  {{ bar_row("Morale",    state.morale,   100) }}
+  <hr>
+  <div class="status-info">Enemy strength: ~{{ "{:,}".format(state.enemy_strength) }}</div>
+</div>
+
+{# ── Battle result (shown once after resolving) ───────────────────────── #}
+{% if state.last_battle_result %}
+{% set r = state.last_battle_result %}
+<div class="box" style="border-color:{% if r.victory %}#3a5a2a{% else %}#5a2a2a{% endif %};">
+  <div class="{% if r.victory %}result-victory{% else %}result-defeat{% endif %}" style="margin-bottom:10px;">
+    {% if r.victory %}VICTORY &mdash; Enemy Repelled!{% else %}The column survives...{% endif %}
+  </div>
+  <div style="font-size:13px; color:#8a7a60; line-height:1.8;">
+    Tactic: {{ r.tactic_name }}<br>
+    Your losses: {{ "{:,}".format(r.soldier_losses) }} soldiers &nbsp;|&nbsp;
+    Civilian dead: {{ "{:,}".format(r.refugee_losses) }} refugees &nbsp;|&nbsp;
+    Enemy killed: {{ "{:,}".format(r.enemy_losses) }} rebels
+  </div>
+</div>
+{% endif %}
+
+{# ── Log ─────────────────────────────────────────────────────────────── #}
+<div class="box">
+  <div class="box-title">RECENT EVENTS</div>
+  {% if state.log %}
+    {% for entry in state.log[:5] %}
+    <div class="log-entry">{{ entry }}</div>
+    {% endfor %}
+  {% else %}
+    <div class="log-entry">(none yet)</div>
+  {% endif %}
+</div>
+
+{# ── Actions or Battle ────────────────────────────────────────────────── #}
+{% if state.pending_battle %}
+  {# BATTLE MODE #}
+  {% set pb = state.pending_battle %}
+  {% set max_force = [pb.enemy_size, state.soldiers, 1]|max %}
+  {% set enemy_pct = [100, (pb.enemy_size / max_force * 100)|int]|min %}
+  {% set player_pct = [100, (state.soldiers / max_force * 100)|int]|min %}
+
+  <div class="box" style="border-color:#8b2020;">
+    <div style="color:#cc4444; font-size:18px; letter-spacing:3px; margin-bottom:12px;">!! BATTLE !!</div>
+    <div style="margin-bottom:12px; color:#c9b99a;">{{ pb.name }} strikes with <strong>{{ "{:,}".format(pb.enemy_size) }}</strong> warriors!</div>
+
+    <div class="bar-row">
+      <span class="bar-label" style="color:#cc6666;">Enemy</span>
+      <div class="bar-track"><div class="bar-fill warn" style="width:{{ enemy_pct }}%;"></div></div>
+      <span class="bar-val">{{ "{:,}".format(pb.enemy_size) }}</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label" style="color:#6699cc;">Yours</span>
+      <div class="bar-track"><div class="bar-fill" style="width:{{ player_pct }}%; background:#2a5a8b;"></div></div>
+      <span class="bar-val">{{ "{:,}".format(state.soldiers) }}</span>
+    </div>
+    <div style="font-size:13px; color:#7a6a50; margin:8px 0 14px;">
+      Refugee column: {{ "{:,}".format(state.refugees) }}
+    </div>
+
+    <div class="box-title">CHOOSE YOUR TACTIC:</div>
+    <form method="POST" action="/battle">
+      <div class="tactic-grid">
+        <button type="submit" name="tactic" value="1" data-sound="battle">
+          [1] CHARGE<br><span style="font-size:11px; color:#7a6a50;">Aggressive assault. Break their lines.</span>
+        </button>
+        <button type="submit" name="tactic" value="2" data-sound="battle">
+          [2] HOLD THE LINE<br><span style="font-size:11px; color:#7a6a50;">Defensive formation. Protect the column.</span>
+        </button>
+        <button type="submit" name="tactic" value="3" data-sound="battle">
+          [3] WICKAN FEINT<br><span style="font-size:11px; color:#7a6a50;">Cavalry draws enemy. Column slips through.</span>
+        </button>
+        <button type="submit" name="tactic" value="4" data-sound="battle">
+          [4] NIGHT ASSAULT<br><span style="font-size:11px; color:#7a6a50;">Strike in darkness. High risk, high reward.</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+{% else %}
+  {# NORMAL ACTIONS #}
+  <div class="box">
+    <div class="box-title">ACTIONS</div>
+    <form method="POST" action="/action">
+      <div class="actions">
+        <button type="submit" name="action" value="march" data-sound="march">
+          [1] March<br><span style="font-size:11px; color:#7a6a50;">Advance at normal pace</span>
+        </button>
+        <button type="submit" name="action" value="forced" data-sound="forced">
+          [2] Forced March<br><span style="font-size:11px; color:#7a6a50;">2x speed, costs morale &amp; lives</span>
+        </button>
+        <button type="submit" name="action" value="rest" data-sound="rest">
+          [3] Rest<br><span style="font-size:11px; color:#7a6a50;">Recover morale</span>
+        </button>
+        <button type="submit" name="action" value="forage" data-sound="forage">
+          [4] Forage<br><span style="font-size:11px; color:#7a6a50;">Gather food &amp; water</span>
+        </button>
+      </div>
+    </form>
+    <div style="margin-top:12px;">
+      <a href="/" class="btn danger" style="font-size:12px;" data-sound="danger">[Q] Abandon the March</a>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

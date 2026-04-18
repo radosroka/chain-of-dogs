@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<pre style="color:#8a7a60; font-size:13px; line-height:1.4; margin-bottom:20px;">
+  +========================================================================+
+  |                                                                        |
+  |        C H A I N   O F   D O G S                                      |
+  |                                                                        |
+  |                 The March to Aren                                      |
+  |                                                                        |
+  |        Based on "Deadhouse Gates" by Steven Erikson                   |
+  |                                                                        |
+  +========================================================================+
+</pre>
+
+<div class="box">
+  <div class="box-title">Seven Cities has erupted in the Whirlwind Rebellion.</div>
+  <p style="color:#8a7a60; font-size:13px; line-height:1.7; margin-bottom:14px;">
+    You are <strong style="color:#c9b99a;">COLTAINE of the Crow Clan</strong>, Fist of the 7th Malazan Army.<br>
+    Escort 50,000 refugees from Hissar to Aren across 300 leagues of hostile desert<br>
+    while Sha'ik's vast rebel armies hunt you at every step.<br><br>
+    History will call it the <em>Chain of Dogs</em>.
+    The refugees are the chain. You are the dog.
+  </p>
+  <hr>
+  <form method="POST" action="/start" style="margin-top:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <input type="text" name="name" placeholder="Enter your name, Fist..." maxlength="30" autofocus required>
+    <button type="submit" class="primary" data-sound="start">Begin the March</button>
+  </form>
+</div>
+
+{% if scores %}
+<div class="box">
+  <div class="box-title">HIGH SCORES</div>
+  <table class="scores">
+    <tr><th>#</th><th>Name</th><th>Score</th><th></th></tr>
+    {% for e in scores %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ e.name }}</td>
+      <td>{{ "{:,}".format(e.score) }}</td>
+      <td>{% if e.won %}<span class="win-badge">VICTORY</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+{% endblock %}

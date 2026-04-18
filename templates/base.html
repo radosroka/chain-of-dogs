@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chain of Dogs</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0e0e0e;
+    color: #c9b99a;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 15px;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  .container {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  pre { font-family: inherit; white-space: pre; }
+
+  hr { border: none; border-top: 1px solid #3a3228; margin: 12px 0; }
+
+  h1, h2 { color: #e8d5b0; letter-spacing: 2px; }
+
+  .box {
+    border: 1px solid #3a3228;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .box-title {
+    color: #e8d5b0;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+
+  /* bars */
+  .bar-row { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
+  .bar-label { width: 100px; color: #a09080; font-size: 13px; }
+  .bar-track { flex: 1; height: 14px; background: #1e1a16; border: 1px solid #3a3228; position: relative; }
+  .bar-fill { height: 100%; background: #6b4f2a; transition: width 0.3s; }
+  .bar-fill.warn { background: #8b2020; }
+  .bar-fill.good { background: #2a6b3a; }
+  .bar-val { width: 80px; text-align: right; font-size: 13px; color: #c9b99a; }
+  .bar-warn { color: #cc4444; font-size: 12px; width: 30px; }
+
+  /* map */
+  .map-line { color: #7a6a50; letter-spacing: 1px; font-size: 13px; }
+  .map-line .done { color: #c9b99a; }
+  .map-line .player { color: #f0d060; }
+  .map-wp { font-size: 11px; color: #5a4a38; }
+  .map-wp .reached { color: #8a7a60; }
+
+  /* log */
+  .log-entry { color: #8a7a60; font-size: 13px; margin: 2px 0; }
+  .log-entry:first-child { color: #b09a7a; }
+
+  /* actions */
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  button, .btn {
+    background: #1e1a16;
+    border: 1px solid #5a4a38;
+    color: #c9b99a;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 8px 18px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+  button:hover, .btn:hover {
+    background: #2e2620;
+    border-color: #8a7a60;
+    color: #e8d5b0;
+  }
+  button.danger { border-color: #8b2020; color: #cc6666; }
+  button.danger:hover { background: #2e1616; }
+  button.primary { border-color: #6b8b4a; color: #a8c880; }
+  button.primary:hover { background: #1a2e16; }
+
+  /* forms */
+  input[type=text] {
+    background: #1e1a16;
+    border: 1px solid #5a4a38;
+    color: #c9b99a;
+    font-family: inherit;
+    font-size: 16px;
+    padding: 8px 12px;
+    width: 300px;
+    outline: none;
+  }
+  input[type=text]:focus { border-color: #8a7a60; }
+
+  /* scores table */
+  .scores { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .scores th { color: #7a6a50; text-align: left; padding: 4px 8px; border-bottom: 1px solid #3a3228; }
+  .scores td { padding: 4px 8px; }
+  .scores tr.highlight td { color: #f0d060; }
+  .scores .win-badge { color: #a8c880; }
+
+  /* battle */
+  .force-bar { height: 16px; background: #3a1a1a; margin: 4px 0; display: flex; align-items: center; }
+  .force-fill-enemy { background: #8b2020; height: 100%; }
+  .force-fill-player { background: #2a5a8b; height: 100%; }
+  .tactic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+
+  /* result */
+  .result-victory { color: #a8c880; font-size: 18px; letter-spacing: 2px; }
+  .result-defeat  { color: #cc6666; font-size: 18px; letter-spacing: 2px; }
+
+  .status-info { color: #7a6a50; font-size: 13px; }
+
+  .warn-text { color: #cc4444; }
+  .good-text { color: #a8c880; }
+</style>
+</head>
+<body>
+<div class="container">
+{% block content %}{% endblock %}
+</div>
+<script>
+const AC = window.AudioContext || window.webkitAudioContext;
+let ac = null;
+function ctx() { if (!ac) ac = new AC(); return ac; }
+
+function tone(freq, type, vol, dur) {
+  const c = ctx(), o = c.createOscillator(), g = c.createGain();
+  o.connect(g); g.connect(c.destination);
+  o.type = type; o.frequency.setValueAtTime(freq, c.currentTime);
+  g.gain.setValueAtTime(vol, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+  o.start(c.currentTime); o.stop(c.currentTime + dur);
+}
+
+function sweep(f0, f1, type, vol, dur) {
+  const c = ctx(), o = c.createOscillator(), g = c.createGain();
+  o.connect(g); g.connect(c.destination);
+  o.type = type;
+  o.frequency.setValueAtTime(f0, c.currentTime);
+  o.frequency.exponentialRampToValueAtTime(f1, c.currentTime + dur);
+  g.gain.setValueAtTime(vol, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+  o.start(c.currentTime); o.stop(c.currentTime + dur);
+}
+
+function noise(vol, dur, lowpass) {
+  const c = ctx();
+  const len = Math.ceil(c.sampleRate * dur);
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1);
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  const filt = c.createBiquadFilter();
+  filt.type = 'lowpass'; filt.frequency.value = lowpass;
+  const g = c.createGain();
+  g.gain.setValueAtTime(vol, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+  src.connect(filt); filt.connect(g); g.connect(c.destination);
+  src.start(c.currentTime); src.stop(c.currentTime + dur);
+}
+
+const sounds = {
+  click:  () => { sweep(900, 400, 'sine', 0.15, 0.07); },
+  march:  () => { sweep(140, 70,  'sine', 0.35, 0.18); noise(0.05, 0.12, 300); },
+  forced: () => {
+    sweep(160, 60, 'sine', 0.4, 0.15);
+    noise(0.08, 0.15, 400);
+    setTimeout(() => sweep(140, 55, 'sine', 0.3, 0.13), 120);
+  },
+  rest:   () => { sweep(520, 660, 'sine', 0.12, 0.25); tone(440, 'sine', 0.07, 0.4); },
+  forage: () => { noise(0.12, 0.2, 1200); sweep(300, 500, 'triangle', 0.08, 0.2); },
+  battle: () => {
+    noise(0.3, 0.08, 3000);
+    sweep(200, 80, 'sawtooth', 0.2, 0.25);
+    setTimeout(() => { noise(0.2, 0.06, 2500); sweep(180, 70, 'sawtooth', 0.15, 0.2); }, 80);
+    setTimeout(() => sweep(600, 200, 'square', 0.1, 0.15), 150);
+  },
+  danger: () => { sweep(300, 150, 'sawtooth', 0.2, 0.3); },
+  start:  () => {
+    sweep(330, 440, 'sine', 0.12, 0.15);
+    setTimeout(() => sweep(440, 550, 'sine', 0.1, 0.15), 140);
+    setTimeout(() => sweep(550, 660, 'sine', 0.08, 0.2), 280);
+  },
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('button, .btn, input[type=submit]').forEach(el => {
+    el.addEventListener('click', () => {
+      const s = el.dataset.sound || 'click';
+      if (sounds[s]) sounds[s]();
+    });
+  });
+});
+</script>
+</body>
+</html>

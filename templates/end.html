@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if state.won %}
+<pre style="color:#8a7a60; font-size:13px; line-height:1.5; margin-bottom:16px;">
+  +======================================================+
+  |                                                      |
+  |   V I C T O R Y                                     |
+  |                                                      |
+  |   The Chain of Dogs reaches Aren.                   |
+  |                                                      |
+  +======================================================+
+
+        /\
+       /  \
+      / /\ \      THE WALLS OF AREN RISE BEFORE YOU.
+     / /  \ \
+    /________\    Coltaine stands at the gate.
+    |        |
+    | A R E N|    The refugees pour through.
+    |        |
+    |________|    The chain holds.
+</pre>
+{% else %}
+<pre style="color:#8a7a60; font-size:13px; line-height:1.5; margin-bottom:16px;">
+  +======================================================+
+  |                                                      |
+  |   T H E   C H A I N   B R E A K S                  |
+  |                                                      |
+  +======================================================+
+
+    The desert claims what the rebels could not.
+
+    Somewhere in the wastes of Seven Cities,
+    the refugees march no more.
+
+    Coltaine of the Crow Clan has failed.
+    The Whirlwind howls in triumph.
+</pre>
+{% endif %}
+
+<div class="box">
+  <div class="box-title">{{ name }}'s Campaign</div>
+  <div style="font-size:13px; color:#8a7a60; line-height:2;">
+    Days marched: &nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#c9b99a;">{{ state.day }}</span><br>
+    Refugees saved: &nbsp;&nbsp; <span style="color:#c9b99a;">{{ "{:,}".format(state.refugees) }}</span><br>
+    Refugees lost: &nbsp;&nbsp;&nbsp; <span style="color:#c9b99a;">{{ "{:,}".format(state.total_refugees_lost) }}</span><br>
+    Soldiers lost: &nbsp;&nbsp;&nbsp; <span style="color:#c9b99a;">{{ "{:,}".format(state.total_soldiers_lost) }}</span><br>
+    {% set pct = state.refugees / [1, state.refugees + state.total_refugees_lost]|max * 100 %}
+    Survival rate: &nbsp;&nbsp;&nbsp; <span style="color:{% if pct > 60 %}#a8c880{% else %}#cc6666{% endif %};">{{ "%.1f"|format(pct) }}%</span><br>
+    Score: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#f0d060; font-size:16px;">{{ "{:,}".format(score) }}</span>
+  </div>
+  {% if state.won %}
+    {% if pct > 80 %}
+    <div style="margin-top:12px; color:#a8c880;">A masterful campaign. Coltaine's legend is secure.</div>
+    {% elif pct > 60 %}
+    <div style="margin-top:12px; color:#c9b99a;">A costly victory. But the refugees live.</div>
+    {% else %}
+    <div style="margin-top:12px; color:#c9b99a;">The gates open. The price was terrible. But they made it.</div>
+    {% endif %}
+  {% endif %}
+</div>
+
+<div class="box">
+  <div class="box-title">HIGH SCORES</div>
+  <table class="scores">
+    <tr><th>#</th><th>Name</th><th>Score</th><th></th></tr>
+    {% for e in scores %}
+    <tr {% if loop.index0 == rank %}class="highlight"{% endif %}>
+      <td>{{ loop.index }}</td>
+      <td>{{ e.name }}</td>
+      <td>{{ "{:,}".format(e.score) }}</td>
+      <td>
+        {% if e.won %}<span class="win-badge">VICTORY</span>{% endif %}
+        {% if loop.index0 == rank %}<span style="color:#f0d060;">&larr;</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div style="margin-top:8px;">
+  <a href="/" class="btn primary" data-sound="start">March Again</a>
+</div>
+
+{% endblock %}
