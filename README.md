@@ -165,7 +165,31 @@ HISSAR --> Ubaryd --> Vathar Forest --> Sekala Crossing --> G'danisban --> Sanim
                                                                                (92 march-days total)
 ```
 
-Each waypoint reached boosts morale. Vathar Forest and Sekala Crossing are the bloodiest legs.
+Each waypoint reached boosts morale.
+
+### Difficulty
+
+Choose your difficulty at the start of each run:
+
+| | Easy | Normal | Hard |
+|---|---|---|---|
+| Starting soldiers | 3,200 | 3,200 | 2,800 |
+| Starting food / water | 22 / 7 | 20 / 5 | 14 / 3 |
+| Attack frequency | Low | Medium | High |
+| Battle win threshold | Easier | Standard | Harder |
+| Min. refugees to survive | 200 | 500 | 5,000 |
+
+**Custom (unranked)** — set your own parameters: starting resources, army size, attack frequency, battle difficulty, disease severity, and survival threshold. Custom runs are not saved to the leaderboard.
+
+### Scoring & Leaderboard
+
+Your score at the end of a run:
+
+```
+score = refugees_alive + soldiers_alive × 5 − days_marched × 20 + 50,000 (if won)
+```
+
+Scores are saved to separate leaderboards per difficulty (Easy / Normal / Hard), each split into **Victories** and **Last Stands**. Custom runs are unranked.
 
 ### Victory & Defeat
 
@@ -179,20 +203,55 @@ Each waypoint reached boosts morale. Vathar Forest and Sekala Crossing are the b
 
 **You lose** if:
 - Your soldiers are destroyed
-- Fewer than 500 refugees survive
+- Too few refugees survive (threshold depends on difficulty)
 - Morale collapses to zero
 
 ---
 
 ## Installation & Running
 
-Requires **Python 3.6+**, no dependencies.
+### Requirements
+
+- Python 3.8+
+- `numpy` — music synthesis
+- `flask` — web version
+- `ffmpeg` — convert synthesized WAV to OGG
+- `paplay` (PulseAudio) — terminal music playback
 
 ```bash
-git clone https://github.com/yourname/chain-of-dogs
+pip install numpy flask
+# ffmpeg and paplay via your package manager, e.g.:
+sudo dnf install ffmpeg pulseaudio-utils   # Fedora
+sudo apt install ffmpeg pulseaudio-utils   # Debian/Ubuntu
+```
+
+### Terminal
+
+```bash
+git clone https://github.com/radosroka/chain-of-dogs
 cd chain-of-dogs
 python3 main.py
 ```
+
+Music is synthesized on first run and cached as `music_ambient.wav` / `music_battle.wav`. Multiple terminal instances share the cached files safely.
+
+### Web
+
+```bash
+python3 web.py
+# then open http://localhost:5000
+```
+
+For production use a proper WSGI server:
+
+```bash
+pip install gunicorn
+gunicorn -w 4 web:app
+```
+
+### OpenBSD rc.d service
+
+An rc.d script is included for running the web version as a system service on OpenBSD. See the script in the repo root.
 
 ---
 
@@ -202,7 +261,7 @@ This game is based on events from **Deadhouse Gates** (Book 2 of the *Malazan Bo
 
 The real Chain of Dogs spans roughly the second half of the novel and runs parallel to another storyline told through the eyes of civilians witnessing it from outside. Reading their perspective — watching Coltaine's army described as a "chain of dogs" dragging the refugees across the continent — is one of the most striking structural choices in modern fantasy.
 
-Key figures of the historical campaign (not yet implemented in the game but part of the lore):
+Key figures of the historical campaign:
 - **Coltaine** — Fist, Crow Clan, relentless
 - **Duiker** — Imperial Historian, the witness
 - **Lull** — Captain of the Sialk Marines
