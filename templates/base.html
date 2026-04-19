@@ -287,7 +287,7 @@ document.addEventListener('click', function(e) {
   if (btn.name) fd.set(btn.name, btn.value);
 
   // Fire fetch immediately (runs in parallel with animation)
-  const fetching = _fetchPage(form.action, form.method || 'POST', fd);
+  const fetching = _fetchPage(form.getAttribute('action'), form.method || 'POST', fd);
 
   playAnim(window.ANIMS[btn.dataset.anim], window.ANIM_DELAYS[btn.dataset.anim], async () => {
     const result = await fetching;
