@@ -28,17 +28,32 @@
   </form>
 </div>
 
-{% if scores %}
+{% if winners %}
 <div class="box">
-  <div class="box-title">HIGH SCORES</div>
+  <div class="box-title">VICTORIES — THE CHAIN HOLDS</div>
   <table class="scores">
-    <tr><th>#</th><th>Name</th><th>Score</th><th></th></tr>
-    {% for e in scores %}
+    <tr><th>#</th><th>Name</th><th>Score</th></tr>
+    {% for e in winners %}
     <tr>
       <td>{{ loop.index }}</td>
       <td>{{ e.name }}</td>
       <td>{{ "{:,}".format(e.score) }}</td>
-      <td>{% if e.won %}<span class="win-badge">VICTORY</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if losers %}
+<div class="box">
+  <div class="box-title">LAST STANDS — THE CHAIN BREAKS</div>
+  <table class="scores">
+    <tr><th>#</th><th>Name</th><th>Score</th></tr>
+    {% for e in losers %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ e.name }}</td>
+      <td>{{ "{:,}".format(e.score) }}</td>
     </tr>
     {% endfor %}
   </table>

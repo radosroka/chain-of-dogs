@@ -31,7 +31,9 @@ def load_scores():
         rows = conn.execute(
             "SELECT name, score, won FROM scores ORDER BY score DESC LIMIT 100"
         ).fetchall()
-    return [{'name': r[0], 'score': r[1], 'won': bool(r[2])} for r in rows]
+    winners = [{'name': r[0], 'score': r[1]} for r in rows if r[2]]
+    losers  = [{'name': r[0], 'score': r[1]} for r in rows if not r[2]]
+    return winners, losers
 
 
 def save_score(name, score, won):
@@ -41,19 +43,18 @@ def save_score(name, score, won):
             (name, score, int(won))
         )
         conn.commit()
-    scores = load_scores()
+    winners, losers = load_scores()
+    group = winners if won else losers
     rank = next(
-        i for i, e in enumerate(scores)
+        i for i, e in enumerate(group)
         if e['name'] == name and e['score'] == score
     )
-    return rank, scores
+    return rank, winners, losers
 
 
 def calc_score(state):
-    score = state.refugees + state.soldiers * 5 - state.day * 20
-    if state.won:
-        score += 10000
-    return max(0, score)
+    bonus = 50000 if state.won else 0
+    return max(0, state.refugees + state.soldiers * 5 - state.day * 20 + bonus)
 
 
 ACTION_SOUNDS = {
@@ -135,17 +136,17 @@ def main():
 
     clear()
     score = calc_score(state)
-    rank, scores = save_score(name, score, state.won)
+    rank, winners, losers = save_score(name, score, state.won)
 
     music.stop()
     if state.won:
         ui.anim_victory()
         sounds.play_victory()
-        ui.show_victory(state, score, rank, scores)
+        ui.show_victory(state, score, rank, winners, losers)
     else:
         ui.anim_defeat()
         sounds.play_defeat()
-        ui.show_defeat(state, score, rank, scores)
+        ui.show_defeat(state, score, rank, winners, losers)
 
 
 if __name__ == '__main__':

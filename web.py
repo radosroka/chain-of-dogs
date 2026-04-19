@@ -35,7 +35,9 @@ def load_scores():
         rows = conn.execute(
             "SELECT name, score, won FROM scores ORDER BY score DESC LIMIT 100"
         ).fetchall()
-    return [{'name': r[0], 'score': r[1], 'won': bool(r[2])} for r in rows]
+    winners = [{'name': r[0], 'score': r[1]} for r in rows if r[2]]
+    losers  = [{'name': r[0], 'score': r[1]} for r in rows if not r[2]]
+    return winners, losers
 
 
 def save_score(name, score, won):
@@ -45,19 +47,18 @@ def save_score(name, score, won):
             (name, score, int(won))
         )
         conn.commit()
-    scores = load_scores()
+    winners, losers = load_scores()
+    group = winners if won else losers
     rank = next(
-        i for i, e in enumerate(scores)
+        i for i, e in enumerate(group)
         if e['name'] == name and e['score'] == score
     )
-    return rank, scores
+    return rank, winners, losers
 
 
 def calc_score(state):
-    score = state.refugees + state.soldiers * 5 - state.day * 20
-    if state.won:
-        score += 10000
-    return max(0, score)
+    bonus = 50000 if state.won else 0
+    return max(0, state.refugees + state.soldiers * 5 - state.day * 20 + bonus)
 
 
 def get_state():
@@ -80,8 +81,8 @@ def serve_music(track):
 
 @app.route('/')
 def index():
-    scores = load_scores()
-    return render_template('index.html', scores=scores[:10])
+    winners, losers = load_scores()
+    return render_template('index.html', winners=winners[:10], losers=losers[:10])
 
 
 @app.route('/start', methods=['POST'])
@@ -181,12 +182,13 @@ def end():
         return redirect(url_for('game'))
     name = session.get('name', 'Unknown')
     score = calc_score(state)
-    rank, scores = save_score(name, score, state.won)
+    rank, winners, losers = save_score(name, score, state.won)
     end_anim = _VICTORY_FRAMES if state.won else _DEFEAT_FRAMES
     end_delay = 900 if state.won else 1100
     session.clear()
     return render_template('end.html', state=state, name=name,
-                           score=score, rank=rank, scores=scores[:10],
+                           score=score, rank=rank,
+                           winners=winners[:10], losers=losers[:10],
                            page_anim_frames=end_anim,
                            page_anim_delay=end_delay)
 

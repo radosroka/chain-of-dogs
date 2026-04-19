@@ -259,7 +259,7 @@ class UI:
         print(f"\n  >>> {message} <<<")
         input("\n  [Press Enter to continue...]")
 
-    def show_victory(self, state, score, rank, scores):
+    def show_victory(self, state, score, rank, winners, losers):
         clear()
         print(VICTORY_ART)
         print(f"  Days marched:      {state.day}")
@@ -276,10 +276,11 @@ class UI:
             print("  A costly victory. But the refugees live.")
         else:
             print("  The gates open. The price was terrible. But they made it.")
-        self._show_leaderboard(scores, rank)
+        self._show_leaderboard("VICTORIES — THE CHAIN HOLDS", winners, rank)
+        self._show_leaderboard("LAST STANDS — THE CHAIN BREAKS", losers, -1)
         input("\n  [Press Enter...]")
 
-    def show_defeat(self, state, score, rank, scores):
+    def show_defeat(self, state, score, rank, winners, losers):
         clear()
         print(DEFEAT_ART)
         print(f"  Days marched:   {state.day}")
@@ -290,7 +291,8 @@ class UI:
         print("  Final log:")
         for entry in state.log[:4]:
             print(f"    {entry}")
-        self._show_leaderboard(scores, rank)
+        self._show_leaderboard("VICTORIES — THE CHAIN HOLDS", winners, -1)
+        self._show_leaderboard("LAST STANDS — THE CHAIN BREAKS", losers, rank)
         input("\n  [Press Enter...]")
 
     # ── Animations ──────────────────────────────────────────────────────
@@ -328,15 +330,16 @@ class UI:
 
     # ── Leaderboard ─────────────────────────────────────────────────────
 
-    def _show_leaderboard(self, scores, highlight_rank):
+    def _show_leaderboard(self, title, scores, highlight_rank):
         print()
         print("  " + "-" * 50)
-        print("  HIGH SCORES")
+        print(f"  {title}")
         print("  " + "-" * 50)
         for i, entry in enumerate(scores[:10]):
             marker = " <--" if i == highlight_rank else ""
-            outcome = "WIN" if entry.get('won') else "   "
-            print(f"  {i+1:>2}. {outcome} {entry['name']:<20} {entry['score']:>8,}{marker}")
+            print(f"  {i+1:>2}. {entry['name']:<20} {entry['score']:>8,}{marker}")
+        if not scores:
+            print("  (none yet)")
         print("  " + "-" * 50)
 
 
