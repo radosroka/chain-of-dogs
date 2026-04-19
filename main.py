@@ -206,7 +206,7 @@ def main():
 
         if event.type == 'attack':
             sounds.play_danger()
-            music.play_battle()
+
             ui.anim_attack_incoming(event.data['name'], event.data['enemy_size'], state.soldiers)
             tactic = ui.render_battle(state, event.data['enemy_size'], event.data['name'])
             ui.anim_battle_clash()
@@ -216,7 +216,7 @@ def main():
             ui.render_battle_result(state, result)
             input("\n  [Press Enter to continue...]")
             state.check_loss()
-            music.play_ambient()
+
 
         elif event.type != 'nothing':
             msg = event.data.get('message', '')
