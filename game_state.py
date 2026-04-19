@@ -69,9 +69,10 @@ TOTAL_DIST = sum(wp["dist"] for wp in WAYPOINTS[1:])  # 92 march-days
 
 
 class GameState:
-    def __init__(self, difficulty='normal'):
-        d = DIFFICULTIES[difficulty]
+    def __init__(self, difficulty='normal', custom_diff=None):
         self.difficulty = difficulty
+        self.custom_diff = custom_diff  # only set when difficulty == 'custom'
+        d = self.diff
         self.day = 1
         self.soldiers = d['soldiers']
         self.refugees = 50000
@@ -91,11 +92,14 @@ class GameState:
 
     @property
     def diff(self):
-        return DIFFICULTIES[self.difficulty]
+        if self.difficulty == 'custom' and self.custom_diff:
+            return self.custom_diff
+        return DIFFICULTIES.get(self.difficulty, DIFFICULTIES['normal'])
 
     def to_dict(self):
         return {
             'difficulty': self.difficulty,
+            'custom_diff': self.custom_diff,
             'day': self.day,
             'soldiers': self.soldiers,
             'refugees': self.refugees,

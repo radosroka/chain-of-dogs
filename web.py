@@ -102,11 +102,48 @@ def start():
     if not name:
         return redirect(url_for('index'))
     difficulty = request.form.get('difficulty', 'normal')
-    if difficulty not in ('easy', 'normal', 'hard'):
+
+    custom_diff = None
+    if difficulty == 'custom':
+        from game_state import DIFFICULTIES
+        base = DIFFICULTIES['normal']
+
+        def _fi(key, default, lo, hi):
+            try:
+                return max(lo, min(hi, int(request.form.get(key, default))))
+            except (ValueError, TypeError):
+                return default
+
+        def _ff(key, default, lo, hi):
+            try:
+                return max(lo, min(hi, float(request.form.get(key, default))))
+            except (ValueError, TypeError):
+                return default
+
+        custom_diff = {
+            'soldiers':         _fi('c_soldiers',    base['soldiers'],    1600, 3600),
+            'food':             _fi('c_food',         base['food'],        8,    25),
+            'water':            _fi('c_water',        base['water'],       2,    8),
+            'morale':           _fi('c_morale',       base['morale'],      40,   90),
+            'march_r_loss':     base['march_r_loss'],
+            'forced_r_loss':    base['forced_r_loss'],
+            'forced_s_loss':    base['forced_s_loss'],
+            'min_refugees':     _fi('c_min_refugees', base['min_refugees'], 100, 8000),
+            'attack_weight':    _fi('c_attack_weight', base['attack_weight'], 8, 35),
+            'attack_day_bonus': base['attack_day_bonus'],
+            'attack_min':       base['attack_min'],
+            'attack_max':       base['attack_max'],
+            'disease_min':      base['disease_min'],
+            'disease_max':      _fi('c_disease_max',  base['disease_max'], 200, 1500),
+            'betrayal_morale':  base['betrayal_morale'],
+            'threshold_mod':    _fi('c_threshold_mod', 0, -10, 10) / 100.0,
+        }
+    elif difficulty not in ('easy', 'normal', 'hard'):
         difficulty = 'normal'
+
     session.clear()
     session['name'] = name
-    state = GameState(difficulty)
+    state = GameState(difficulty, custom_diff)
     save_state(state)
     return redirect(url_for('game'))
 
@@ -196,11 +233,19 @@ def end():
         return redirect(url_for('game'))
     name = session.get('name', 'Unknown')
     score = calc_score(state)
-    rank, all_scores = save_score(name, score, state.won, state.difficulty)
-    diff_scores = all_scores[state.difficulty]
     end_anim = _VICTORY_FRAMES if state.won else _DEFEAT_FRAMES
     end_delay = 900 if state.won else 1100
     session.clear()
+
+    if state.difficulty == 'custom':
+        return render_template('end.html', state=state, name=name,
+                               score=score, rank=-1,
+                               winners=[], losers=[],
+                               page_anim_frames=end_anim,
+                               page_anim_delay=end_delay)
+
+    rank, all_scores = save_score(name, score, state.won, state.difficulty)
+    diff_scores = all_scores[state.difficulty]
     return render_template('end.html', state=state, name=name,
                            score=score, rank=rank,
                            winners=diff_scores['winners'],

@@ -26,22 +26,63 @@
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
       <input type="text" name="name" placeholder="Enter your name, Fist..." maxlength="30" autofocus required>
     </div>
-    <div style="display:flex; gap:18px; margin-bottom:14px; font-size:13px;">
+    <div style="display:flex; flex-wrap:wrap; gap:18px; margin-bottom:14px; font-size:13px;">
       <label style="cursor:pointer; color:#8a7a60;">
-        <input type="radio" name="difficulty" value="easy" style="margin-right:5px;">
+        <input type="radio" name="difficulty" value="easy" onchange="toggleCustom(false)" style="margin-right:5px;">
         Easy &mdash; <span style="color:#5a6a4a;">generous supplies, fewer attacks</span>
       </label>
       <label style="cursor:pointer; color:#c9b99a;">
-        <input type="radio" name="difficulty" value="normal" checked style="margin-right:5px;">
+        <input type="radio" name="difficulty" value="normal" checked onchange="toggleCustom(false)" style="margin-right:5px;">
         Normal &mdash; <span style="color:#7a6a50;">the Chain of Dogs as written</span>
       </label>
       <label style="cursor:pointer; color:#cc6666;">
-        <input type="radio" name="difficulty" value="hard" style="margin-right:5px;">
+        <input type="radio" name="difficulty" value="hard" onchange="toggleCustom(false)" style="margin-right:5px;">
         Hard &mdash; <span style="color:#6a3a3a;">scarce resources, relentless assault</span>
       </label>
+      <label style="cursor:pointer; color:#8a6a8a;">
+        <input type="radio" name="difficulty" value="custom" onchange="toggleCustom(true)" style="margin-right:5px;">
+        Custom &mdash; <span style="color:#5a4a5a;">your rules, unranked</span>
+      </label>
     </div>
+
+    <div id="custom-panel" style="display:none; border:1px solid #4a3a4a; padding:14px; margin-bottom:14px; font-size:13px;">
+      <div style="color:#8a6a8a; margin-bottom:10px; letter-spacing:1px;">CUSTOM PARAMETERS</div>
+
+      {% macro slider(name, label, val, lo, hi, step=1, note='') %}
+      <div style="display:flex; align-items:center; gap:10px; margin:6px 0;">
+        <span style="width:200px; color:#8a7a60;">{{ label }}</span>
+        <input type="range" name="{{ name }}" min="{{ lo }}" max="{{ hi }}" step="{{ step }}" value="{{ val }}"
+               oninput="this.nextElementSibling.textContent=this.value"
+               style="flex:1; accent-color:#8a6a8a;">
+        <span style="width:60px; color:#c9b99a; text-align:right;">{{ val }}</span>
+        {% if note %}<span style="color:#5a4a50; font-size:11px;">{{ note }}</span>{% endif %}
+      </div>
+      {% endmacro %}
+
+      <div style="color:#6a5a50; font-size:11px; margin-bottom:8px;">— Resources —</div>
+      {{ slider('c_soldiers',    'Starting soldiers',       3200, 1600, 3600, 200) }}
+      {{ slider('c_food',        'Starting food (days)',    20,   8,    25) }}
+      {{ slider('c_water',       'Starting water (days)',   5,    2,    8) }}
+      {{ slider('c_morale',      'Starting morale',         75,   40,   90,  5) }}
+
+      <div style="color:#6a5a50; font-size:11px; margin:10px 0 8px;">— Enemy —</div>
+      {{ slider('c_attack_weight',  'Attack frequency',     20,   8,    35,  1, '(8=quiet, 35=relentless)') }}
+      {{ slider('c_disease_max',    'Max disease deaths',   600,  200,  1500, 50) }}
+      {{ slider('c_threshold_mod',  'Battle difficulty',    0,    -10,  10,  1, '(−10=easier, +10=harder)') }}
+
+      <div style="color:#6a5a50; font-size:11px; margin:10px 0 8px;">— Survival —</div>
+      {{ slider('c_min_refugees', 'Min refugees to survive', 500, 100, 8000, 100) }}
+
+      <div style="color:#5a4a5a; font-size:11px; margin-top:10px;">Custom games are not saved to the leaderboard.</div>
+    </div>
+
     <button type="submit" class="primary" data-sound="start">Begin the March</button>
   </form>
+<script>
+function toggleCustom(show) {
+  document.getElementById('custom-panel').style.display = show ? 'block' : 'none';
+}
+</script>
 </div>
 
 {% for diff, label, color in [('easy', 'EASY', '#5a6a4a'), ('normal', 'NORMAL', '#7a6a50'), ('hard', 'HARD', '#6a3a3a')] %}

@@ -276,9 +276,12 @@ class UI:
             print("  A costly victory. But the refugees live.")
         else:
             print("  The gates open. The price was terrible. But they made it.")
-        d = difficulty.upper()
-        self._show_leaderboard(f"VICTORIES [{d}] — THE CHAIN HOLDS", winners, rank)
-        self._show_leaderboard(f"LAST STANDS [{d}] — THE CHAIN BREAKS", losers, -1)
+        if difficulty == 'custom':
+            print("\n  [ CUSTOM DIFFICULTY — UNRANKED ]")
+        else:
+            d = difficulty.upper()
+            self._show_leaderboard(f"VICTORIES [{d}] — THE CHAIN HOLDS", winners, rank)
+            self._show_leaderboard(f"LAST STANDS [{d}] — THE CHAIN BREAKS", losers, -1)
         input("\n  [Press Enter...]")
 
     def show_defeat(self, state, score, rank, winners, losers, difficulty='normal'):
@@ -292,9 +295,12 @@ class UI:
         print("  Final log:")
         for entry in state.log[:4]:
             print(f"    {entry}")
-        d = difficulty.upper()
-        self._show_leaderboard(f"VICTORIES [{d}] — THE CHAIN HOLDS", winners, -1)
-        self._show_leaderboard(f"LAST STANDS [{d}] — THE CHAIN BREAKS", losers, rank)
+        if difficulty == 'custom':
+            print("\n  [ CUSTOM DIFFICULTY — UNRANKED ]")
+        else:
+            d = difficulty.upper()
+            self._show_leaderboard(f"VICTORIES [{d}] — THE CHAIN HOLDS", winners, -1)
+            self._show_leaderboard(f"LAST STANDS [{d}] — THE CHAIN BREAKS", losers, rank)
         input("\n  [Press Enter...]")
 
     # ── Animations ──────────────────────────────────────────────────────
