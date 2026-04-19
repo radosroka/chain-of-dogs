@@ -20,12 +20,17 @@ def _get_conn():
     conn = sqlite3.connect(DB_FILE)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS scores (
-            id    INTEGER PRIMARY KEY AUTOINCREMENT,
-            name  TEXT NOT NULL,
-            score INTEGER NOT NULL,
-            won   INTEGER NOT NULL
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            name       TEXT NOT NULL,
+            score      INTEGER NOT NULL,
+            won        INTEGER NOT NULL,
+            difficulty TEXT NOT NULL DEFAULT 'normal'
         )
     """)
+    try:
+        conn.execute("ALTER TABLE scores ADD COLUMN difficulty TEXT NOT NULL DEFAULT 'normal'")
+    except Exception:
+        pass
     conn.commit()
     return conn
 
@@ -33,27 +38,33 @@ def _get_conn():
 def load_scores():
     with _get_conn() as conn:
         rows = conn.execute(
-            "SELECT name, score, won FROM scores ORDER BY score DESC LIMIT 100"
+            "SELECT name, score, won, difficulty FROM scores ORDER BY score DESC LIMIT 300"
         ).fetchall()
-    winners = [{'name': r[0], 'score': r[1]} for r in rows if r[2]]
-    losers  = [{'name': r[0], 'score': r[1]} for r in rows if not r[2]]
-    return winners, losers
+    by_diff = {d: {'winners': [], 'losers': []} for d in ('easy', 'normal', 'hard')}
+    for name, score, won, diff in rows:
+        if diff not in by_diff:
+            diff = 'normal'
+        key = 'winners' if won else 'losers'
+        lst = by_diff[diff][key]
+        if len(lst) < 10:
+            lst.append({'name': name, 'score': score})
+    return by_diff
 
 
-def save_score(name, score, won):
+def save_score(name, score, won, difficulty):
     with _get_conn() as conn:
         conn.execute(
-            "INSERT INTO scores (name, score, won) VALUES (?, ?, ?)",
-            (name, score, int(won))
+            "INSERT INTO scores (name, score, won, difficulty) VALUES (?, ?, ?, ?)",
+            (name, score, int(won), difficulty)
         )
         conn.commit()
-    winners, losers = load_scores()
-    group = winners if won else losers
+    scores = load_scores()
+    group = scores[difficulty]['winners' if won else 'losers']
     rank = next(
-        i for i, e in enumerate(group)
-        if e['name'] == name and e['score'] == score
+        (i for i, e in enumerate(group) if e['name'] == name and e['score'] == score),
+        len(group) - 1,
     )
-    return rank, winners, losers
+    return rank, scores
 
 
 def calc_score(state):
@@ -81,8 +92,8 @@ def serve_music(track):
 
 @app.route('/')
 def index():
-    winners, losers = load_scores()
-    return render_template('index.html', winners=winners[:10], losers=losers[:10])
+    scores = load_scores()
+    return render_template('index.html', scores=scores)
 
 
 @app.route('/start', methods=['POST'])
@@ -185,13 +196,15 @@ def end():
         return redirect(url_for('game'))
     name = session.get('name', 'Unknown')
     score = calc_score(state)
-    rank, winners, losers = save_score(name, score, state.won)
+    rank, all_scores = save_score(name, score, state.won, state.difficulty)
+    diff_scores = all_scores[state.difficulty]
     end_anim = _VICTORY_FRAMES if state.won else _DEFEAT_FRAMES
     end_delay = 900 if state.won else 1100
     session.clear()
     return render_template('end.html', state=state, name=name,
                            score=score, rank=rank,
-                           winners=winners[:10], losers=losers[:10],
+                           winners=diff_scores['winners'],
+                           losers=diff_scores['losers'],
                            page_anim_frames=end_anim,
                            page_anim_delay=end_delay)
 

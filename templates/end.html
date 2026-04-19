@@ -68,9 +68,11 @@
   {% endif %}
 </div>
 
+{% set diff_label = state.difficulty | upper %}
+
 {% if winners %}
 <div class="box">
-  <div class="box-title">VICTORIES — THE CHAIN HOLDS</div>
+  <div class="box-title">VICTORIES [{{ diff_label }}] — THE CHAIN HOLDS</div>
   <table class="scores">
     <tr><th>#</th><th>Name</th><th>Score</th><th></th></tr>
     {% for e in winners %}
@@ -87,7 +89,7 @@
 
 {% if losers %}
 <div class="box">
-  <div class="box-title">LAST STANDS — THE CHAIN BREAKS</div>
+  <div class="box-title">LAST STANDS [{{ diff_label }}] — THE CHAIN BREAKS</div>
   <table class="scores">
     <tr><th>#</th><th>Name</th><th>Score</th><th></th></tr>
     {% for e in losers %}
