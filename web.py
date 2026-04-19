@@ -90,9 +90,12 @@ def start():
     name = request.form.get('name', '').strip()
     if not name:
         return redirect(url_for('index'))
+    difficulty = request.form.get('difficulty', 'normal')
+    if difficulty not in ('easy', 'normal', 'hard'):
+        difficulty = 'normal'
     session.clear()
     session['name'] = name
-    state = GameState()
+    state = GameState(difficulty)
     save_state(state)
     return redirect(url_for('game'))
 

@@ -72,14 +72,32 @@ TACTIC_SOUNDS = {
 }
 
 
+def ask_difficulty():
+    clear()
+    print("\n  Choose difficulty:\n")
+    print("    [1] Easy   — more supplies, fewer attacks, battles easier")
+    print("    [2] Normal — the Chain of Dogs as written")
+    print("    [3] Hard   — scarce resources, relentless attacks, high loss threshold\n")
+    while True:
+        choice = input("  > ").strip()
+        if choice == '1':
+            return 'easy'
+        if choice == '2':
+            return 'normal'
+        if choice == '3':
+            return 'hard'
+        print("  Enter 1, 2, or 3.")
+
+
 def main():
     ui = UI()
     name = ui.ask_name()
+    difficulty = ask_difficulty()
     sounds.play_start()
     music.generate_all()
     music.play_ambient()
 
-    state = GameState()
+    state = GameState(difficulty)
     events = EventSystem(state)
 
     ui.show_intro()

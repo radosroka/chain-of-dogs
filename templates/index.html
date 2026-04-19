@@ -22,8 +22,24 @@
     The refugees are the chain. You are the dog.
   </p>
   <hr>
-  <form method="POST" action="/start" style="margin-top:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-    <input type="text" name="name" placeholder="Enter your name, Fist..." maxlength="30" autofocus required>
+  <form method="POST" action="/start" style="margin-top:14px;">
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
+      <input type="text" name="name" placeholder="Enter your name, Fist..." maxlength="30" autofocus required>
+    </div>
+    <div style="display:flex; gap:18px; margin-bottom:14px; font-size:13px;">
+      <label style="cursor:pointer; color:#8a7a60;">
+        <input type="radio" name="difficulty" value="easy" style="margin-right:5px;">
+        Easy &mdash; <span style="color:#5a6a4a;">generous supplies, fewer attacks</span>
+      </label>
+      <label style="cursor:pointer; color:#c9b99a;">
+        <input type="radio" name="difficulty" value="normal" checked style="margin-right:5px;">
+        Normal &mdash; <span style="color:#7a6a50;">the Chain of Dogs as written</span>
+      </label>
+      <label style="cursor:pointer; color:#cc6666;">
+        <input type="radio" name="difficulty" value="hard" style="margin-right:5px;">
+        Hard &mdash; <span style="color:#6a3a3a;">scarce resources, relentless assault</span>
+      </label>
+    </div>
     <button type="submit" class="primary" data-sound="start">Begin the March</button>
   </form>
 </div>

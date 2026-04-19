@@ -1,3 +1,60 @@
+DIFFICULTIES = {
+    'easy': {
+        'soldiers':           3200,
+        'food':               22,
+        'water':              7,
+        'morale':             80,
+        'march_r_loss':       0.001,
+        'forced_r_loss':      0.004,
+        'forced_s_loss':      0.007,
+        'min_refugees':       200,
+        'attack_weight':      14,
+        'attack_day_bonus':   4,
+        'attack_min':         0.05,
+        'attack_max':         0.18,
+        'disease_min':        50,
+        'disease_max':        300,
+        'betrayal_morale':    -8,
+        'threshold_mod':      -0.07,
+    },
+    'normal': {
+        'soldiers':           3200,
+        'food':               20,
+        'water':              5,
+        'morale':             75,
+        'march_r_loss':       0.002,
+        'forced_r_loss':      0.006,
+        'forced_s_loss':      0.01,
+        'min_refugees':       500,
+        'attack_weight':      20,
+        'attack_day_bonus':   8,
+        'attack_min':         0.08,
+        'attack_max':         0.25,
+        'disease_min':        100,
+        'disease_max':        600,
+        'betrayal_morale':    -12,
+        'threshold_mod':      0.0,
+    },
+    'hard': {
+        'soldiers':           2800,
+        'food':               14,
+        'water':              3,
+        'morale':             70,
+        'march_r_loss':       0.003,
+        'forced_r_loss':      0.009,
+        'forced_s_loss':      0.015,
+        'min_refugees':       5000,
+        'attack_weight':      28,
+        'attack_day_bonus':   15,
+        'attack_min':         0.12,
+        'attack_max':         0.35,
+        'disease_min':        300,
+        'disease_max':        1200,
+        'betrayal_morale':    -18,
+        'threshold_mod':      0.07,
+    },
+}
+
 WAYPOINTS = [
     {"name": "Hissar",          "short": "HISSAR",  "dist": 0},
     {"name": "Ubaryd",          "short": "Ubaryd",  "dist": 12},
@@ -12,13 +69,15 @@ TOTAL_DIST = sum(wp["dist"] for wp in WAYPOINTS[1:])  # 92 march-days
 
 
 class GameState:
-    def __init__(self):
+    def __init__(self, difficulty='normal'):
+        d = DIFFICULTIES[difficulty]
+        self.difficulty = difficulty
         self.day = 1
-        self.soldiers = 3200
+        self.soldiers = d['soldiers']
         self.refugees = 50000
-        self.food = 20
-        self.water = 5
-        self.morale = 75
+        self.food = d['food']
+        self.water = d['water']
+        self.morale = d['morale']
         self.waypoint_idx = 0
         self.days_traveled = 0   # march-days since last waypoint
         self.enemy_strength = 28000
@@ -30,8 +89,13 @@ class GameState:
         self.pending_battle = None   # {'enemy_size': int, 'name': str} when awaiting tactic
         self.last_battle_result = None  # shown once after battle resolves
 
+    @property
+    def diff(self):
+        return DIFFICULTIES[self.difficulty]
+
     def to_dict(self):
         return {
+            'difficulty': self.difficulty,
             'day': self.day,
             'soldiers': self.soldiers,
             'refugees': self.refugees,
@@ -106,7 +170,7 @@ class GameState:
         self.day += 1
         self.food = max(0, self.food - 1)
         self.water = max(0, self.water - 1)
-        deaths = max(0, int(self.refugees * 0.002))
+        deaths = max(0, int(self.refugees * self.diff['march_r_loss']))
         self.refugees = max(0, self.refugees - deaths)
         self.total_refugees_lost += deaths
         self._check_waypoint()
@@ -119,8 +183,8 @@ class GameState:
         self.food = max(0, self.food - 1)
         self.water = max(0, self.water - 2)
         self.morale = max(0, self.morale - 5)
-        r = max(0, int(self.refugees * 0.006))
-        s = max(0, int(self.soldiers * 0.01))
+        r = max(0, int(self.refugees * self.diff['forced_r_loss']))
+        s = max(0, int(self.soldiers * self.diff['forced_s_loss']))
         self.refugees = max(0, self.refugees - r)
         self.soldiers = max(0, self.soldiers - s)
         self.total_refugees_lost += r
@@ -140,7 +204,7 @@ class GameState:
 
     def forage(self):
         self.day += 1
-        self.food = min(30, self.food + 4)
+        self.food = min(20, self.food + 4)
         self.water = min(10, self.water + 2)
         deaths = max(0, int(self.refugees * 0.001))
         self.refugees = max(0, self.refugees - deaths)
@@ -162,7 +226,7 @@ class GameState:
         reasons = []
         if self.soldiers <= 0:
             reasons.append("The 7th Army is destroyed. No one remains to guard the column.")
-        if self.refugees <= 500:
+        if self.refugees <= self.diff['min_refugees']:
             reasons.append("The refugees are no more. The chain breaks.")
         if self.morale <= 0:
             reasons.append("Morale has collapsed. The army dissolves into the desert.")

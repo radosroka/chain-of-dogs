@@ -30,8 +30,9 @@ class EventSystem:
 
     def _roll_event(self):
         s = self.state
+        d = s.diff
         weights = {
-            'attack':       20 + (8 if s.day > 20 else 0),
+            'attack':       d['attack_weight'] + (d['attack_day_bonus'] if s.day > 20 else 0),
             'heat_wave':    8  + (6 if s.water <= 2 else 0),
             'disease':      7  + (3 if s.morale < 50 else 0),
             'supply_cache': 8,
@@ -68,9 +69,10 @@ class EventSystem:
         etype = self._roll_event()
 
         if etype == 'attack':
+            d = s.diff
             size = random.randint(
-                int(s.enemy_strength * 0.08),
-                int(s.enemy_strength * 0.25),
+                int(s.enemy_strength * d['attack_min']),
+                int(s.enemy_strength * d['attack_max']),
             )
             name = random.choice(ATTACK_NAMES)
             s.add_log(f"ATTACK! {name} ({size:,} warriors)!")
@@ -83,7 +85,7 @@ class EventSystem:
             return Event('heat_wave', {'message': msg})
 
         elif etype == 'disease':
-            deaths = random.randint(100, 600)
+            deaths = random.randint(s.diff['disease_min'], s.diff['disease_max'])
             s.refugees = max(0, s.refugees - deaths)
             s.total_refugees_lost += deaths
             s.morale = max(0, s.morale - 3)
@@ -95,14 +97,14 @@ class EventSystem:
         elif etype == 'supply_cache':
             food = random.randint(2, 8)
             water = random.randint(1, 4)
-            s.food = min(30, s.food + food)
+            s.food = min(20, s.food + food)
             s.water = min(10, s.water + water)
             msg = f"Supply cache found! +{food} days food, +{water} days water."
             s.add_log(msg)
             return Event('supply_cache', {'message': msg})
 
         elif etype == 'betrayal':
-            s.morale = max(0, s.morale - 12)
+            s.morale = max(0, s.morale + s.diff['betrayal_morale'])
             msg = "Treachery! Local guides lead part of the column astray. Morale plummets."
             s.add_log(msg)
             s.check_loss()
@@ -153,7 +155,7 @@ class EventSystem:
         refugee_losses = min(refugee_losses, int(s.refugees * 0.06))
 
         victory_score = force_ratio * 0.3 + morale_mod * 0.3 + random.random() * 0.4
-        victory = victory_score > td['threshold']
+        victory = victory_score > td['threshold'] + s.diff['threshold_mod']
 
         s.soldiers = max(0, s.soldiers - soldier_losses)
         s.refugees = max(0, s.refugees - refugee_losses)
