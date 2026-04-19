@@ -165,7 +165,7 @@ class UI:
         print("  " + "-" * 68)
         print(row("Soldiers",  state.soldiers, 3200))
         print(row("Refugees",  state.refugees, 50000))
-        print(row("Food",      state.food,     30,   " days"))
+        print(row("Food",      state.food,     20,   " days"))
         print(row("Water",     state.water,    10,   " days"))
         print(row("Morale",    state.morale,   100))
         print("  " + "-" * 68)
