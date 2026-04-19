@@ -277,21 +277,28 @@ def _to_ogg(wav_path, ogg_path):
     )
 
 
+_gen_lock = threading.Lock()
+
+
 def generate_all():
-    """Generate WAV + OGG for both tracks. Called once at startup."""
-    print("  Composing ambient music...", flush=True)
-    ambient = _build_ambient(120.0)
-    with open(AMBIENT_WAV, 'wb') as f:
-        f.write(_to_wav(ambient))
-    _to_ogg(AMBIENT_WAV, AMBIENT_OGG)
+    """Generate WAV + OGG for both tracks if not already present."""
+    with _gen_lock:
+        if os.path.exists(AMBIENT_WAV) and os.path.exists(BATTLE_WAV):
+            return
 
-    print("  Composing battle music...", flush=True)
-    battle = _build_battle(90.0)
-    with open(BATTLE_WAV, 'wb') as f:
-        f.write(_to_wav(battle))
-    _to_ogg(BATTLE_WAV, BATTLE_OGG)
+        print("  Composing ambient music...", flush=True)
+        ambient = _build_ambient(120.0)
+        with open(AMBIENT_WAV, 'wb') as f:
+            f.write(_to_wav(ambient))
+        _to_ogg(AMBIENT_WAV, AMBIENT_OGG)
 
-    print("  Music ready.", flush=True)
+        print("  Composing battle music...", flush=True)
+        battle = _build_battle(90.0)
+        with open(BATTLE_WAV, 'wb') as f:
+            f.write(_to_wav(battle))
+        _to_ogg(BATTLE_WAV, BATTLE_OGG)
+
+        print("  Music ready.", flush=True)
 
 
 # ── Playback ─────────────────────────────────────────────────────────────────

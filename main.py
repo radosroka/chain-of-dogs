@@ -13,7 +13,7 @@ DB_FILE = os.path.join(os.path.dirname(__file__), 'scores.db')
 
 
 def _get_conn():
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect(DB_FILE, timeout=10)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS scores (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
