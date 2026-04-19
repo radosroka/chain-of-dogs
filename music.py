@@ -303,17 +303,18 @@ def generate_all():
 
 # ── Playback ─────────────────────────────────────────────────────────────────
 
-_player_proc = None
+_player_proc  = None
 _player_lock  = threading.Lock()
 _stop_event   = threading.Event()
 _current_file = None
+_session_id   = 0
 
 
-def _loop_thread(wav_file):
+def _loop_thread(wav_file, session_id):
     global _player_proc
-    while not _stop_event.is_set():
+    while not _stop_event.is_set() and _session_id == session_id:
         with _player_lock:
-            if _stop_event.is_set():
+            if _stop_event.is_set() or _session_id != session_id:
                 break
             _player_proc = subprocess.Popen(
                 ['paplay', wav_file],
@@ -323,13 +324,14 @@ def _loop_thread(wav_file):
 
 
 def play(wav_file):
-    global _current_file
+    global _current_file, _session_id
     if wav_file == _current_file:
         return
     stop()
     _current_file = wav_file
+    _session_id += 1
     _stop_event.clear()
-    threading.Thread(target=_loop_thread, args=(wav_file,), daemon=True).start()
+    threading.Thread(target=_loop_thread, args=(wav_file, _session_id), daemon=True).start()
 
 
 def play_ambient():
