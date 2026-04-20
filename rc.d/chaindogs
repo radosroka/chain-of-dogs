@@ -1,7 +1,7 @@
 #!/bin/ksh
 
 daemon="/usr/local/bin/python3"
-daemon_flags="/home/rsroka/Mess/chain-of-dogs/web.py"
+daemon_flags="/home/rsroka/chain-of-dogs/web.py"
 daemon_user="rsroka"
 rc_bg=YES
 
