@@ -169,6 +169,7 @@ def game():
         battle_min_rolls = {t: min_roll_for_victory(state, t, pb['enemy_size']) for t in range(1, 5)}
 
     return render_template('game.html', state=state, name=session.get('name', ''),
+                           battle_rerolls=state.rerolls,
                            waypoints=WAYPOINTS, total_dist=TOTAL_DIST,
                            march_frames=_MARCH_FRAMES,
                            forced_frames=_FORCED_FRAMES,
@@ -224,6 +225,12 @@ def battle():
         dr = int(request.form.get('dice_roll', ''))
         if 2 <= dr <= 12:
             dice_roll = dr
+    except (ValueError, TypeError):
+        pass
+
+    try:
+        rerolls_used = max(0, int(request.form.get('rerolls_used', 0)))
+        state.rerolls = max(0, state.rerolls - rerolls_used)
     except (ValueError, TypeError):
         pass
 

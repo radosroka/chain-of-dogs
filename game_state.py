@@ -16,6 +16,7 @@ DIFFICULTIES = {
         'disease_max':        300,
         'betrayal_morale':    -8,
         'threshold_mod':      -0.07,
+        'rerolls':            3,
     },
     'normal': {
         'soldiers':           3200,
@@ -34,6 +35,7 @@ DIFFICULTIES = {
         'disease_max':        600,
         'betrayal_morale':    -12,
         'threshold_mod':      0.0,
+        'rerolls':            2,
     },
     'hard': {
         'soldiers':           2800,
@@ -52,6 +54,7 @@ DIFFICULTIES = {
         'disease_max':        1200,
         'betrayal_morale':    -14,
         'threshold_mod':      0.05,
+        'rerolls':            1,
     },
 }
 
@@ -91,6 +94,7 @@ class GameState:
         self.last_battle_result = None  # shown once after battle resolves
         self.scout_intel = False     # True if scouts event preceded the next battle
         self.last_battle_day = 0     # day of most recent battle (0 = never fought)
+        self.rerolls = d.get('rerolls', 0)
 
     @property
     def diff(self):
@@ -120,6 +124,7 @@ class GameState:
             'last_battle_result': self.last_battle_result,
             'scout_intel': self.scout_intel,
             'last_battle_day': self.last_battle_day,
+            'rerolls': self.rerolls,
         }
 
     @classmethod

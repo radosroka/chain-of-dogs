@@ -169,7 +169,7 @@ class UI:
         print(row("Water",     state.water,    10,   " days"))
         print(row("Morale",    state.morale,   100))
         print("  " + "-" * 68)
-        print(f"  Enemy strength: ~{state.enemy_strength:,}")
+        print(f"  Enemy strength: ~{state.enemy_strength:,}    Rerolls: {state.rerolls}")
 
     def _render_log(self, state):
         print("  RECENT EVENTS:")
@@ -272,7 +272,7 @@ class UI:
                 return int(choice)
             print("  Choose 1-5.")
 
-    def get_dice_roll(self, on_roll=None):
+    def get_dice_roll(self, on_roll=None, rerolls=0):
         import random
         print()
         print("  +-----------------------------------------+")
@@ -286,14 +286,22 @@ class UI:
         print("  +-----------------------------------------+")
         print()
         input("  [Press Enter to roll...]")
-        if on_roll:
-            on_roll()
-        d1 = random.randint(1, 6)
-        d2 = random.randint(1, 6)
-        total = d1 + d2
-        print(f"\n  You rolled: [ {d1} ] + [ {d2} ] = {total}\n")
-        input("  [Press Enter to engage...]")
-        return total
+        while True:
+            if on_roll:
+                on_roll()
+            d1 = random.randint(1, 6)
+            d2 = random.randint(1, 6)
+            total = d1 + d2
+            print(f"\n  You rolled: [ {d1} ] + [ {d2} ] = {total}\n")
+            if rerolls > 0:
+                choice = input(f"  [Enter] Accept  |  [R] Reroll ({rerolls} remaining): ").strip().lower()
+                if choice == 'r':
+                    rerolls -= 1
+                    print()
+                    continue
+            else:
+                input("  [Press Enter to engage...]")
+            return total, rerolls
 
     def render_battle_result(self, state, result, wave=None):
         clear()

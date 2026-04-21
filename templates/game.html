@@ -83,6 +83,9 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
   {{ bar_row("Morale",    state.morale,   100) }}
   <hr>
   <div class="status-info">Enemy strength: ~{{ "{:,}".format(state.enemy_strength) }}</div>
+  {% if state.difficulty != 'custom' %}
+  <div class="status-info">Rerolls remaining: {{ state.rerolls }}</div>
+  {% endif %}
 </div>
 
 {# ── Battle result (shown once after resolving) ───────────────────────── #}
@@ -196,6 +199,7 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
     <div style="margin-top:10px;" class="box-title">CHOOSE YOUR TACTIC:</div>
     <form method="POST" action="/battle" id="battle-form">
       <input type="hidden" name="dice_roll" id="dice_roll" value="">
+      <input type="hidden" name="rerolls_used" id="rerolls_used" value="0">
       <div style="margin: 12px 0 16px; padding: 12px; border: 1px solid #5a4a20; background: #111008;">
         <div style="color:#c9b99a; font-size:13px; margin-bottom:10px; letter-spacing:1px;">&#9856; ROLL 2d6 — the battle's fate awaits</div>
         <div id="dice-display" style="font-family:monospace; color:#5a4a30; font-size:13px; line-height:1.6; margin-bottom:12px;">
@@ -204,14 +208,27 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
   |  ?  |  |  ?  |
   |     |  |     |
   '-----'  '-----'</div>
-        <button type="button" id="roll-btn" onclick="rollDice()"
+        <button type="button" id="roll-btn" onclick="rollDice(false)"
                 style="border-color:#8a6a20; color:#f0d060; font-size:14px; padding:8px 20px;">
           [ Roll the Dice ]
+        </button>
+        <button type="button" id="reroll-btn" onclick="rollDice(true)"
+                style="border-color:#5a3a20; color:#aa7744; font-size:14px; padding:8px 20px; display:none;">
+          [ Reroll (<span id="rerolls-left">{{ battle_rerolls }}</span> left) ]
         </button>
         <span id="dice-result" style="margin-left:14px; font-size:16px; color:#f0d060; font-family:monospace; display:none;"></span>
       </div>
       <script>
-        function rollDice() {
+        var _rerollsLeft = {{ battle_rerolls }};
+        var _rerollsUsed = 0;
+
+        function rollDice(isReroll) {
+          if (isReroll) {
+            if (_rerollsLeft <= 0) return;
+            _rerollsLeft--;
+            _rerollsUsed++;
+            document.getElementById('rerolls_used').value = _rerollsUsed;
+          }
           var d1 = Math.ceil(Math.random() * 6);
           var d2 = Math.ceil(Math.random() * 6);
           var total = d1 + d2;
@@ -224,9 +241,17 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
             "  '-----'  '-----'";
           document.getElementById('dice-result').textContent = d1 + ' + ' + d2 + ' = ' + total;
           document.getElementById('dice-result').style.display = 'inline';
-          document.getElementById('roll-btn').textContent = '[ Roll Again ]';
+          document.getElementById('roll-btn').style.display = 'none';
+          var rerollBtn = document.getElementById('reroll-btn');
+          if (_rerollsLeft > 0) {
+            document.getElementById('rerolls-left').textContent = _rerollsLeft;
+            rerollBtn.style.display = 'inline-block';
+          } else {
+            rerollBtn.style.display = 'none';
+          }
           document.querySelectorAll('.tactic-grid button').forEach(function(b) {
             b.disabled = false;
+            b.style.opacity = '1';
           });
           var sfx = new Audio('/sounds/dice_roll.ogg');
           sfx.volume = 0.8;
@@ -236,11 +261,6 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
         document.querySelectorAll('.tactic-grid button').forEach(function(b) {
           b.disabled = true;
           b.style.opacity = '0.4';
-        });
-        document.getElementById('roll-btn').addEventListener('click', function() {
-          document.querySelectorAll('.tactic-grid button').forEach(function(b) {
-            b.style.opacity = '1';
-          });
         });
       </script>
       {% macro roll_hint(t) %}

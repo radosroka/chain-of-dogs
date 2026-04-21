@@ -219,7 +219,7 @@ def main():
             tactic = ui.render_battle(state, edata['enemy_size'], enemy_name, intel,
                                       weakness_tactic, weakness_hint, wave=wave_label,
                                       min_rolls=min_rolls)
-            dice_roll = ui.get_dice_roll(sounds.play_dice_roll)
+            dice_roll, state.rerolls = ui.get_dice_roll(sounds.play_dice_roll, rerolls=state.rerolls)
             ui.anim_battle_clash()
             sounds.play_battle()
             result = events.resolve_battle(tactic, edata['enemy_size'], enemy_name, dice_roll=dice_roll)
@@ -236,7 +236,7 @@ def main():
                 tactic2 = ui.render_battle(state, wave2_size, enemy_name, intel,
                                            weakness_tactic, weakness_hint, wave=2,
                                            min_rolls=min_rolls2)
-                dice_roll2 = ui.get_dice_roll(sounds.play_dice_roll)
+                dice_roll2, state.rerolls = ui.get_dice_roll(sounds.play_dice_roll, rerolls=state.rerolls)
                 ui.anim_battle_clash()
                 sounds.play_battle()
                 result2 = events.resolve_battle(tactic2, wave2_size, enemy_name, dice_roll=dice_roll2)
