@@ -309,6 +309,11 @@ class UI:
         print("  +" + "=" * 66 + "+")
         if result.get('retreated'):
             print(f"  |{'RETREAT — The column disengages':^66}|")
+        elif result.get('critical') == 'win':
+            header = f"WAVE {wave} REPELLED!" if wave else "*** CRITICAL VICTORY! ***"
+            print(f"  |{header:^66}|")
+        elif result.get('critical') == 'loss':
+            print(f"  |{'*** CRITICAL FAILURE! ***':^66}|")
         elif result['victory']:
             header = f"WAVE {wave} REPELLED!" if wave else "VICTORY - Enemy Repelled!"
             print(f"  |{header:^66}|")
@@ -324,6 +329,9 @@ class UI:
             print("  *** Hungry/thirsty soldiers fought at a penalty. ***")
         if result.get('fatigue_penalty'):
             print("  *** Battle fatigue reduced effectiveness. ***")
+        if result.get('critical_msg'):
+            print(f"  {result['critical_msg']}")
+            print()
         if result.get('weakness_match') or result.get('attrition_penalty') or result.get('fatigue_penalty'):
             print()
         print(f"  Your losses:    {result['soldier_losses']:,} soldiers")

@@ -95,6 +95,11 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
   <div class="{% if r.get('retreated') %}result-defeat{% elif r.victory %}result-victory{% else %}result-defeat{% endif %}" style="margin-bottom:10px;">
     {% if r.get('retreated') %}
       RETREAT &mdash; The column disengages{% if r.get('has_wave2') %} (Wave {{ r.wave }}){% endif %}
+    {% elif r.get('critical') == 'win' %}
+      &#9733; CRITICAL VICTORY! &#9733;
+      {% if r.get('has_wave2') %} &mdash; <span style="color:#cc8844;">Second wave incoming!</span>{% endif %}
+    {% elif r.get('critical') == 'loss' %}
+      &#9760; CRITICAL FAILURE! &#9760;
     {% elif r.victory %}
       {% if r.get('wave') %}WAVE {{ r.wave }} REPELLED!{% else %}VICTORY &mdash; Enemy Repelled!{% endif %}
       {% if r.get('has_wave2') %} &mdash; <span style="color:#cc8844;">Second wave incoming!</span>{% endif %}
@@ -102,6 +107,11 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
       The column survives...
     {% endif %}
   </div>
+  {% if r.get('critical_msg') %}
+  <div style="font-style:italic; font-size:13px; color:{% if r.get('critical') == 'win' %}#a8e880{% else %}#cc6666{% endif %}; margin-bottom:10px;">
+    &ldquo;{{ r.critical_msg }}&rdquo;
+  </div>
+  {% endif %}
   {% if r.get('weakness_match') %}
   <div style="color:#88cc66; font-size:12px; margin-bottom:6px;">&#9733; Exploited enemy weakness &mdash; extra damage dealt!</div>
   {% endif %}
@@ -266,8 +276,8 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
       {% macro roll_hint(t) %}
         {% if battle_min_rolls %}
           {% set r = battle_min_rolls.get(t) %}
-          {% if r is none %}<span style="color:#cc4444; font-size:11px;"> &mdash; cannot win</span>
-          {% elif r == 2 %}<span style="color:#88cc66; font-size:11px;"> &mdash; any roll wins</span>
+          {% if r == 12 %}<span style="color:#cc4444; font-size:11px;"> &mdash; critical only (12)</span>
+          {% elif r == 3 %}<span style="color:#88cc66; font-size:11px;"> &mdash; need 3+ (2 always fails)</span>
           {% else %}<span style="color:#f0d060; font-size:11px;"> &mdash; need {{ r }}+</span>
           {% endif %}
         {% endif %}

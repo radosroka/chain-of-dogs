@@ -27,6 +27,20 @@ FACTION_WEAKNESSES = {
     "Sha'ik's Regulars":                   4,  # NIGHT ASSAULT — discipline crumbles in darkness
 }
 
+CRIT_WIN_MSGS = {
+    1: "The charge is unstoppable — the rebels shatter like glass before iron and do not regroup.",
+    2: "Unbreakable. The rebels exhaust themselves against your shields and crumble into the dust.",
+    3: "Flawless. The Wickan riders vanish and reappear behind the enemy, who collapses in blind panic.",
+    4: "The darkness swallows them whole. Not a single alarm is raised before it is over.",
+}
+
+CRIT_LOSS_MSGS = {
+    1: "The charge breaks apart. Your officers fall first — the column disintegrates into a rout.",
+    2: "The line collapses from within. A moment of panic spreads like plague through the ranks.",
+    3: "The feint is seen through. The Wickan riders are cut off and the column is left exposed.",
+    4: "Your soldiers lose each other in the darkness. The assault becomes a massacre — of your own.",
+}
+
 FACTION_WEAKNESS_HINTS = {
     "Sha'ik's Holy Desert Apocalypse":      "Their fervor falters under a direct, overwhelming assault.",
     "Korbolo Dom's Army of the Apocalypse": "Regulars rely on formation — darkness robs them of it.",
@@ -61,10 +75,11 @@ def min_roll_for_victory(state, tactic, enemy_size):
     needed_factor = (threshold + victory_penalty - force_ratio * 0.3 - morale_mod * 0.3) / 0.4
     min_roll = math.floor(needed_factor * 10 + 2) + 1
 
+    # Roll 2 always fails, roll 12 always wins — clamp accordingly
     if min_roll <= 2:
-        return 2
+        return 3   # anything except 2 wins; show "need 3+"
     if min_roll > 12:
-        return None
+        return 12  # only a critical (12) can save you
     return min_roll
 
 
@@ -266,10 +281,18 @@ class EventSystem:
         soldier_losses = min(soldier_losses, int(s.soldiers * 0.45))
         refugee_losses = min(refugee_losses, int(s.refugees * 0.06))
 
-        # High dice roll = better fate (2→0.0, 7→0.5, 12→1.0)
-        dice_factor = (dice_roll - 2) / 10 if dice_roll is not None else random.random()
-        victory_score = force_ratio * 0.3 + morale_mod * 0.3 + dice_factor * 0.4 - victory_penalty
-        victory = victory_score > td['threshold'] + s.diff['threshold_mod']
+        # Critical results: 12 always wins, 2 always fails
+        if dice_roll == 12:
+            victory = True
+            critical = 'win'
+        elif dice_roll == 2:
+            victory = False
+            critical = 'loss'
+        else:
+            dice_factor = (dice_roll - 2) / 10 if dice_roll is not None else random.random()
+            victory_score = force_ratio * 0.3 + morale_mod * 0.3 + dice_factor * 0.4 - victory_penalty
+            victory = victory_score > td['threshold'] + s.diff['threshold_mod']
+            critical = None
 
         s.soldiers = max(0, s.soldiers - soldier_losses)
         s.refugees = max(0, s.refugees - refugee_losses)
@@ -292,6 +315,12 @@ class EventSystem:
         )
         s.add_log(msg)
 
+        crit_msg = None
+        if critical == 'win':
+            crit_msg = CRIT_WIN_MSGS.get(tactic)
+        elif critical == 'loss':
+            crit_msg = CRIT_LOSS_MSGS.get(tactic)
+
         return {
             'victory': victory,
             'retreated': False,
@@ -302,4 +331,6 @@ class EventSystem:
             'weakness_match': weakness_match,
             'attrition_penalty': attrition_penalty,
             'fatigue_penalty': fatigue_penalty,
+            'critical': critical,
+            'critical_msg': crit_msg,
         }
