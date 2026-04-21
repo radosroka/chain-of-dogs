@@ -194,28 +194,55 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
     {% endif %}
 
     <div style="margin-top:10px;" class="box-title">CHOOSE YOUR TACTIC:</div>
-    <script>
-      (function() {
-        var sfx = new Audio('/sounds/dice_roll.ogg');
-        sfx.volume = 0.8;
-        sfx.play().catch(function() {});
-      })();
-    </script>
     <form method="POST" action="/battle" id="battle-form">
+      <input type="hidden" name="dice_roll" id="dice_roll" value="">
       <div style="margin: 12px 0 16px; padding: 12px; border: 1px solid #5a4a20; background: #111008;">
-        <div style="color:#c9b99a; font-size:13px; margin-bottom:8px; letter-spacing:1px;">&#9856; ROLL 2d6 AND ENTER THE TOTAL:</div>
-        <div style="font-family:monospace; color:#5a4a30; font-size:12px; line-height:1.4; margin-bottom:10px;">&nbsp;&nbsp;.-----.&nbsp;&nbsp;.-----.
-&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
-&nbsp;&nbsp;|&nbsp;&nbsp;?&nbsp;&nbsp;|&nbsp;&nbsp;|&nbsp;&nbsp;?&nbsp;&nbsp;|
-&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
-&nbsp;&nbsp;'-----'&nbsp;&nbsp;'-----'</div>
-        <input type="number" name="dice_roll" id="dice_roll" min="2" max="12"
-               placeholder="2 – 12" required
-               style="width:90px; text-align:center; font-size:18px; font-family:monospace;
-                      background:#1a1810; color:#f0d060; border:1px solid #8a6a20;
-                      padding:6px 8px; letter-spacing:2px;">
-        <span style="color:#5a4a30; font-size:12px; margin-left:10px;">(two six-sided dice)</span>
+        <div style="color:#c9b99a; font-size:13px; margin-bottom:10px; letter-spacing:1px;">&#9856; ROLL 2d6 — the battle's fate awaits</div>
+        <div id="dice-display" style="font-family:monospace; color:#5a4a30; font-size:13px; line-height:1.6; margin-bottom:12px;">
+  .-----.  .-----.
+  |     |  |     |
+  |  ?  |  |  ?  |
+  |     |  |     |
+  '-----'  '-----'</div>
+        <button type="button" id="roll-btn" onclick="rollDice()"
+                style="border-color:#8a6a20; color:#f0d060; font-size:14px; padding:8px 20px;">
+          [ Roll the Dice ]
+        </button>
+        <span id="dice-result" style="margin-left:14px; font-size:16px; color:#f0d060; font-family:monospace; display:none;"></span>
       </div>
+      <script>
+        function rollDice() {
+          var d1 = Math.ceil(Math.random() * 6);
+          var d2 = Math.ceil(Math.random() * 6);
+          var total = d1 + d2;
+          document.getElementById('dice_roll').value = total;
+          document.getElementById('dice-display').textContent =
+            '  .-----.  .-----.\n' +
+            '  |     |  |     |\n' +
+            '  |  ' + d1 + '  |  |  ' + d2 + '  |\n' +
+            '  |     |  |     |\n' +
+            "  '-----'  '-----'";
+          document.getElementById('dice-result').textContent = d1 + ' + ' + d2 + ' = ' + total;
+          document.getElementById('dice-result').style.display = 'inline';
+          document.getElementById('roll-btn').textContent = '[ Roll Again ]';
+          document.querySelectorAll('.tactic-grid button').forEach(function(b) {
+            b.disabled = false;
+          });
+          var sfx = new Audio('/sounds/dice_roll.ogg');
+          sfx.volume = 0.8;
+          sfx.play().catch(function() {});
+        }
+        // Tactic buttons disabled until dice are rolled
+        document.querySelectorAll('.tactic-grid button').forEach(function(b) {
+          b.disabled = true;
+          b.style.opacity = '0.4';
+        });
+        document.getElementById('roll-btn').addEventListener('click', function() {
+          document.querySelectorAll('.tactic-grid button').forEach(function(b) {
+            b.style.opacity = '1';
+          });
+        });
+      </script>
       <div class="tactic-grid">
         <button type="submit" name="tactic" value="1" data-sound="battle" data-anim="clash">
           [1] CHARGE<br><span style="font-size:11px; color:#7a6a50;">Aggressive assault. Break their lines.</span>
