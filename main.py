@@ -202,18 +202,42 @@ def main():
             continue
 
         if event.type == 'attack':
+            from events import FACTION_WEAKNESSES, FACTION_WEAKNESS_HINTS
             sounds.play_danger()
 
-            intel = event.data.get('intel', False)
-            ui.anim_attack_incoming(event.data['name'], event.data['enemy_size'], state.soldiers, intel)
-            tactic = ui.render_battle(state, event.data['enemy_size'], event.data['name'], intel)
+            edata = event.data
+            enemy_name = edata['name']
+            intel = edata.get('intel', False)
+            multi_wave = edata.get('multi_wave', False)
+            weakness_tactic = FACTION_WEAKNESSES.get(enemy_name)
+            weakness_hint = FACTION_WEAKNESS_HINTS.get(enemy_name)
+
+            # ── Wave 1 ──────────────────────────────────────────────────
+            wave_label = 1 if multi_wave else None
+            ui.anim_attack_incoming(enemy_name, edata['enemy_size'], state.soldiers, intel)
+            tactic = ui.render_battle(state, edata['enemy_size'], enemy_name, intel,
+                                      weakness_tactic, weakness_hint, wave=wave_label)
             ui.anim_battle_clash()
             sounds.play_battle()
-            result = events.resolve_battle(tactic, event.data['enemy_size'])
+            result = events.resolve_battle(tactic, edata['enemy_size'], enemy_name)
             clear()
-            ui.render_battle_result(state, result)
+            ui.render_battle_result(state, result, wave=wave_label)
             input("\n  [Press Enter to continue...]")
             state.check_loss()
+
+            # ── Wave 2 (only if multi-wave, wave 1 was a win, not a retreat, still alive) ──
+            if multi_wave and result['victory'] and not result.get('retreated') and not state.game_over:
+                wave2_size = int(edata['enemy_size'] * 0.5)
+                ui.anim_attack_incoming(enemy_name, wave2_size, state.soldiers, intel)
+                tactic2 = ui.render_battle(state, wave2_size, enemy_name, intel,
+                                           weakness_tactic, weakness_hint, wave=2)
+                ui.anim_battle_clash()
+                sounds.play_battle()
+                result2 = events.resolve_battle(tactic2, wave2_size, enemy_name)
+                clear()
+                ui.render_battle_result(state, result2, wave=2)
+                input("\n  [Press Enter to continue...]")
+                state.check_loss()
 
 
         elif event.type != 'nothing':

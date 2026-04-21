@@ -197,11 +197,15 @@ class UI:
                 return action_map[choice]
             print("  Invalid choice. Enter 1-4 or q.")
 
-    def render_battle(self, state, enemy_size, enemy_name, intel=True):
+    def render_battle(self, state, enemy_size, enemy_name, intel=True,
+                      weakness_tactic=None, weakness_hint=None, wave=None):
         clear()
         print()
         print("  +" + "=" * 66 + "+")
-        print(f"  |{'!! BATTLE !!':^66}|")
+        if wave:
+            print(f"  |{'!! BATTLE — WAVE ' + str(wave) + ' !!':^66}|")
+        else:
+            print(f"  |{'!! BATTLE !!':^66}|")
         print("  +" + "=" * 66 + "+")
         print()
         print(f"  {enemy_name}")
@@ -226,6 +230,22 @@ class UI:
         print()
         print(f"  REFUGEE COLUMN: ~~~~~~~~~~~~~~~~~~~ ({state.refugees:,})")
         print()
+
+        # Warnings
+        if state.food == 0 and state.water == 0:
+            print("  *** STARVING AND DEHYDRATED — soldiers fight at severe penalty ***")
+        elif state.food == 0:
+            print("  *** STARVING — hungry soldiers fight at a penalty ***")
+        elif state.water == 0:
+            print("  *** DEHYDRATED — parched soldiers fight at a penalty ***")
+        days_gap = state.day - state.last_battle_day
+        if state.last_battle_day > 0 and days_gap < 3:
+            print(f"  *** BATTLE FATIGUE — fought {days_gap} day(s) ago, soldiers haven't recovered ***")
+
+        if intel and weakness_hint:
+            print(f"  [INTEL] {weakness_hint}")
+
+        print()
         print("  " + "-" * 66)
         print("  CHOOSE YOUR TACTIC:")
         print()
@@ -233,31 +253,45 @@ class UI:
         print("    [2] HOLD THE LINE - Defensive formation. Protect the column.")
         print("    [3] WICKAN FEINT  - Cavalry draws enemy. Column slips through.")
         print("    [4] NIGHT ASSAULT - Strike in darkness. High risk, high reward.")
+        print("    [5] DISENGAGE     - Retreat. Refugees scatter (chaos), morale drops.")
         print()
 
         while True:
             choice = input("  > ").strip()
-            if choice in ('1', '2', '3', '4'):
+            if choice in ('1', '2', '3', '4', '5'):
                 return int(choice)
-            print("  Choose 1-4.")
+            print("  Choose 1-5.")
 
-    def render_battle_result(self, state, result):
+    def render_battle_result(self, state, result, wave=None):
         clear()
         print()
         print("  +" + "=" * 66 + "+")
-        if result['victory']:
-            print(f"  |{'VICTORY - Enemy Repelled!':^66}|")
+        if result.get('retreated'):
+            print(f"  |{'RETREAT — The column disengages':^66}|")
+        elif result['victory']:
+            header = f"WAVE {wave} REPELLED!" if wave else "VICTORY - Enemy Repelled!"
+            print(f"  |{header:^66}|")
         else:
             print(f"  |{'The column survives...':^66}|")
         print("  +" + "=" * 66 + "+")
         print()
         print(f"  Tactic used:    {result['tactic_name']}")
         print()
+        if result.get('weakness_match'):
+            print("  *** Exploited enemy weakness — extra damage dealt! ***")
+        if result.get('attrition_penalty'):
+            print("  *** Hungry/thirsty soldiers fought at a penalty. ***")
+        if result.get('fatigue_penalty'):
+            print("  *** Battle fatigue reduced effectiveness. ***")
+        if result.get('weakness_match') or result.get('attrition_penalty') or result.get('fatigue_penalty'):
+            print()
         print(f"  Your losses:    {result['soldier_losses']:,} soldiers")
         print(f"  Civilian dead:  {result['refugee_losses']:,} refugees")
         print(f"  Enemy killed:   {result['enemy_losses']:,} rebels")
         print()
-        if result['victory']:
+        if result.get('retreated'):
+            print("  The column breaks away. Chaos in the refugee train. We live.")
+        elif result['victory']:
             print("  The enemy breaks and retreats. For now, the chain holds.")
         else:
             print("  It was costly. But the column lives. The march continues.")

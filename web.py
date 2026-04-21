@@ -155,7 +155,7 @@ def game():
     page_anim_delay = 600
     if state.pending_battle:
         pb = state.pending_battle
-        page_anim_frames = _build_attack_frames(pb['name'], pb['enemy_size'], state.soldiers)
+        page_anim_frames = _build_attack_frames(pb['name'], pb['enemy_size'], state.soldiers, pb.get('intel', True))
 
     return render_template('game.html', state=state, name=session.get('name', ''),
                            waypoints=WAYPOINTS, total_dist=TOTAL_DIST,
@@ -204,14 +204,29 @@ def battle():
         return redirect(url_for('game'))
 
     tactic = request.form.get('tactic', '2')
-    if tactic not in ('1', '2', '3', '4'):
+    if tactic not in ('1', '2', '3', '4', '5'):
         return redirect(url_for('game'))
 
-    events = EventSystem(state)
-    result = events.resolve_battle(int(tactic), state.pending_battle['enemy_size'])
+    pb = state.pending_battle
+    ev = EventSystem(state)
+    result = ev.resolve_battle(int(tactic), pb['enemy_size'], pb.get('name'))
     state.check_loss()
-    state.pending_battle = None
-    state.last_battle_result = result
+
+    # Multi-wave: if wave 1 won (not retreated), queue wave 2
+    if (pb.get('multi_wave') and result['victory'] and not result.get('retreated')
+            and not state.game_over):
+        wave2_size = int(pb['enemy_size'] * 0.5)
+        state.pending_battle = {
+            'enemy_size': wave2_size,
+            'name': pb['name'],
+            'intel': pb.get('intel', False),
+            'multi_wave': False,
+            'wave': 2,
+        }
+        state.last_battle_result = {**result, 'wave': 1, 'has_wave2': True}
+    else:
+        state.pending_battle = None
+        state.last_battle_result = {**result, 'wave': pb.get('wave'), 'has_wave2': False}
 
     save_state(state)
     if state.game_over:

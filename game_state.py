@@ -87,9 +87,10 @@ class GameState:
         self.log = []
         self.total_refugees_lost = 0
         self.total_soldiers_lost = 0
-        self.pending_battle = None   # {'enemy_size': int, 'name': str, 'intel': bool} when awaiting tactic
+        self.pending_battle = None   # {'enemy_size': int, 'name': str, 'intel': bool, 'multi_wave': bool} when awaiting tactic
         self.last_battle_result = None  # shown once after battle resolves
         self.scout_intel = False     # True if scouts event preceded the next battle
+        self.last_battle_day = 0     # day of most recent battle (0 = never fought)
 
     @property
     def diff(self):
@@ -118,6 +119,7 @@ class GameState:
             'pending_battle': self.pending_battle,
             'last_battle_result': self.last_battle_result,
             'scout_intel': self.scout_intel,
+            'last_battle_day': self.last_battle_day,
         }
 
     @classmethod

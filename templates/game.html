@@ -88,10 +88,26 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
 {# ── Battle result (shown once after resolving) ───────────────────────── #}
 {% if state.last_battle_result %}
 {% set r = state.last_battle_result %}
-<div class="box" style="border-color:{% if r.victory %}#3a5a2a{% else %}#5a2a2a{% endif %};">
-  <div class="{% if r.victory %}result-victory{% else %}result-defeat{% endif %}" style="margin-bottom:10px;">
-    {% if r.victory %}VICTORY &mdash; Enemy Repelled!{% else %}The column survives...{% endif %}
+<div class="box" style="border-color:{% if r.get('retreated') %}#5a4a20{% elif r.victory %}#3a5a2a{% else %}#5a2a2a{% endif %};">
+  <div class="{% if r.get('retreated') %}result-defeat{% elif r.victory %}result-victory{% else %}result-defeat{% endif %}" style="margin-bottom:10px;">
+    {% if r.get('retreated') %}
+      RETREAT &mdash; The column disengages{% if r.get('has_wave2') %} (Wave {{ r.wave }}){% endif %}
+    {% elif r.victory %}
+      {% if r.get('wave') %}WAVE {{ r.wave }} REPELLED!{% else %}VICTORY &mdash; Enemy Repelled!{% endif %}
+      {% if r.get('has_wave2') %} &mdash; <span style="color:#cc8844;">Second wave incoming!</span>{% endif %}
+    {% else %}
+      The column survives...
+    {% endif %}
   </div>
+  {% if r.get('weakness_match') %}
+  <div style="color:#88cc66; font-size:12px; margin-bottom:6px;">&#9733; Exploited enemy weakness &mdash; extra damage dealt!</div>
+  {% endif %}
+  {% if r.get('attrition_penalty') %}
+  <div style="color:#cc6644; font-size:12px; margin-bottom:6px;">&#9888; Hungry/thirsty soldiers fought at a penalty.</div>
+  {% endif %}
+  {% if r.get('fatigue_penalty') %}
+  <div style="color:#cc6644; font-size:12px; margin-bottom:6px;">&#9888; Battle fatigue reduced effectiveness.</div>
+  {% endif %}
   <div style="font-size:13px; color:#8a7a60; line-height:1.8;">
     Tactic: {{ r.tactic_name }}<br>
     Your losses: {{ "{:,}".format(r.soldier_losses) }} soldiers &nbsp;|&nbsp;
@@ -122,7 +138,9 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
   {% set player_pct = [100, (state.soldiers / max_force * 100)|int]|min %}
 
   <div class="box" style="border-color:#8b2020;">
-    <div style="color:#cc4444; font-size:18px; letter-spacing:3px; margin-bottom:12px;">!! BATTLE !!</div>
+    <div style="color:#cc4444; font-size:18px; letter-spacing:3px; margin-bottom:12px;">
+      {% if pb.get('wave') %}!! BATTLE &mdash; WAVE {{ pb.wave }} !!{% else %}!! BATTLE !!{% endif %}
+    </div>
     {% if pb.intel %}
     <div style="margin-bottom:12px; color:#c9b99a;">{{ pb.name }} strikes with <strong>{{ "{:,}".format(pb.enemy_size) }}</strong> warriors!</div>
     {% else %}
@@ -142,11 +160,40 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
       <div class="bar-track"><div class="bar-fill" style="width:{{ player_pct }}%; background:#2a5a8b;"></div></div>
       <span class="bar-val">{{ "{:,}".format(state.soldiers) }}</span>
     </div>
-    <div style="font-size:13px; color:#7a6a50; margin:8px 0 14px;">
+    <div style="font-size:13px; color:#7a6a50; margin:8px 0 6px;">
       Refugee column: {{ "{:,}".format(state.refugees) }}
     </div>
 
-    <div class="box-title">CHOOSE YOUR TACTIC:</div>
+    {# Warnings #}
+    {% if state.food == 0 and state.water == 0 %}
+    <div style="color:#cc4444; font-size:12px; margin-bottom:4px;">&#9888; STARVING &amp; DEHYDRATED &mdash; severe penalty to soldiers</div>
+    {% elif state.food == 0 %}
+    <div style="color:#cc6644; font-size:12px; margin-bottom:4px;">&#9888; STARVING &mdash; hungry soldiers fight at a penalty</div>
+    {% elif state.water == 0 %}
+    <div style="color:#cc6644; font-size:12px; margin-bottom:4px;">&#9888; DEHYDRATED &mdash; parched soldiers fight at a penalty</div>
+    {% endif %}
+    {% set days_gap = state.day - state.last_battle_day %}
+    {% if state.last_battle_day > 0 and days_gap < 3 %}
+    <div style="color:#cc6644; font-size:12px; margin-bottom:4px;">&#9888; BATTLE FATIGUE &mdash; fought {{ days_gap }} day(s) ago, soldiers exhausted</div>
+    {% endif %}
+
+    {# Weakness intel hint (only shown with scout intel) #}
+    {% if pb.intel %}
+    {% set weakness_hints = {
+      "Sha'ik's Holy Desert Apocalypse":      "Their fervor falters under a direct, overwhelming assault.",
+      "Korbolo Dom's Army of the Apocalypse": "Regulars rely on formation — darkness robs them of it.",
+      "Leoman's Desert Raiders":              "Wickan cavalry have faced these desert raiders before.",
+      "Kamist Reloe's Mage Host":             "Hold your line. Outlast the mage reserves — do not overextend.",
+      "Tribal Confederation forces":          "Tribes shatter when hit hard and fast. Strike like a fist.",
+      "Sha'ik's Regulars":                   "Night blinds soldiers who depend on drill and order."
+    } %}
+    {% set hint = weakness_hints.get(pb.name) %}
+    {% if hint %}
+    <div style="color:#88aa66; font-size:12px; margin-bottom:4px;">[INTEL] {{ hint }}</div>
+    {% endif %}
+    {% endif %}
+
+    <div style="margin-top:10px;" class="box-title">CHOOSE YOUR TACTIC:</div>
     <form method="POST" action="/battle">
       <div class="tactic-grid">
         <button type="submit" name="tactic" value="1" data-sound="battle" data-anim="clash">
@@ -160,6 +207,9 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
         </button>
         <button type="submit" name="tactic" value="4" data-sound="battle" data-anim="clash">
           [4] NIGHT ASSAULT<br><span style="font-size:11px; color:#7a6a50;">Strike in darkness. High risk, high reward.</span>
+        </button>
+        <button type="submit" name="tactic" value="5" data-sound="danger" style="border-color:#5a3a20; color:#aa7744;">
+          [5] DISENGAGE<br><span style="font-size:11px; color:#7a6a50;">Retreat. Refugees scatter. Soldiers intact.</span>
         </button>
       </div>
     </form>
