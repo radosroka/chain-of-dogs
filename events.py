@@ -161,12 +161,17 @@ class EventSystem:
 
         return Event('nothing', {'message': 'The march continues without incident.'})
 
-    def resolve_battle(self, tactic, enemy_size, enemy_name=None):
+    def resolve_battle(self, tactic, enemy_size, enemy_name=None, dice_roll=None):
         s = self.state
 
         # ── Retreat (tactic 5: DISENGAGE) ───────────────────────────────
         if tactic == 5:
-            refugee_losses = max(0, int(s.refugees * random.uniform(0.04, 0.09)))
+            # High dice roll = less chaos during retreat (0.09 at roll 2, 0.04 at roll 12)
+            if dice_roll is not None:
+                loss_rate = 0.09 - (dice_roll - 2) / 10 * 0.05
+            else:
+                loss_rate = random.uniform(0.04, 0.09)
+            refugee_losses = max(0, int(s.refugees * loss_rate))
             refugee_losses = min(refugee_losses, int(s.refugees * 0.12))
             s.refugees = max(0, s.refugees - refugee_losses)
             s.total_refugees_lost += refugee_losses
@@ -230,7 +235,9 @@ class EventSystem:
         soldier_losses = min(soldier_losses, int(s.soldiers * 0.45))
         refugee_losses = min(refugee_losses, int(s.refugees * 0.06))
 
-        victory_score = force_ratio * 0.3 + morale_mod * 0.3 + random.random() * 0.4 - victory_penalty
+        # High dice roll = better fate (2→0.0, 7→0.5, 12→1.0)
+        dice_factor = (dice_roll - 2) / 10 if dice_roll is not None else random.random()
+        victory_score = force_ratio * 0.3 + morale_mod * 0.3 + dice_factor * 0.4 - victory_penalty
         victory = victory_score > td['threshold'] + s.diff['threshold_mod']
 
         s.soldiers = max(0, s.soldiers - soldier_losses)

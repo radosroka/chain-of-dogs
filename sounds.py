@@ -5,11 +5,14 @@ Playback is non-blocking (background threads).
 """
 import io
 import math
+import os
 import random
 import struct
 import subprocess
 import threading
 import wave
+
+_DICE_ROLL_FILE = os.path.join(os.path.dirname(__file__), 'dice_roll.ogg')
 
 SAMPLE_RATE = 22050
 _enabled = True
@@ -107,6 +110,17 @@ def _delay(samples: list[float], seconds: float) -> list[float]:
 
 
 # ── Named sounds ────────────────────────────────────────────────────────
+
+def play_dice_roll():
+    if not _enabled or not os.path.exists(_DICE_ROLL_FILE):
+        return
+    threading.Thread(
+        target=lambda: subprocess.run(
+            ['ffplay', '-nodisp', '-autoexit', '-loglevel', 'quiet', _DICE_ROLL_FILE],
+        ),
+        daemon=True,
+    ).start()
+
 
 def play_click():
     _play(_sine_sweep(900, 400, 0.07, 0.18))

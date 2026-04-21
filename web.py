@@ -85,6 +85,15 @@ def serve_music(track):
     return send_file(path, mimetype='audio/ogg')
 
 
+@app.route('/sounds/dice_roll.ogg')
+def serve_dice_roll():
+    from flask import send_file
+    path = os.path.join(os.path.dirname(__file__), 'dice_roll.ogg')
+    if not os.path.exists(path):
+        return '', 404
+    return send_file(path, mimetype='audio/ogg')
+
+
 @app.route('/')
 def index():
     scores = load_scores()
@@ -207,9 +216,17 @@ def battle():
     if tactic not in ('1', '2', '3', '4', '5'):
         return redirect(url_for('game'))
 
+    dice_roll = None
+    try:
+        dr = int(request.form.get('dice_roll', ''))
+        if 2 <= dr <= 12:
+            dice_roll = dr
+    except (ValueError, TypeError):
+        pass
+
     pb = state.pending_battle
     ev = EventSystem(state)
-    result = ev.resolve_battle(int(tactic), pb['enemy_size'], pb.get('name'))
+    result = ev.resolve_battle(int(tactic), pb['enemy_size'], pb.get('name'), dice_roll=dice_roll)
     state.check_loss()
 
     # Multi-wave: if wave 1 won (not retreated), queue wave 2

@@ -262,6 +262,28 @@ class UI:
                 return int(choice)
             print("  Choose 1-5.")
 
+    def get_dice_roll(self):
+        print()
+        print("  +-----------------------------------------+")
+        print("  |   ROLL 2d6 — the battle's fate awaits  |")
+        print("  |                                         |")
+        print("  |    .-----.  .-----.                     |")
+        print("  |    |     |  |     |   <-- roll 'em     |")
+        print("  |    |  ?  |  |  ?  |                    |")
+        print("  |    |     |  |     |                     |")
+        print("  |    '-----'  '-----'                     |")
+        print("  +-----------------------------------------+")
+        print()
+        while True:
+            raw = input("  Total rolled (2-12): ").strip()
+            try:
+                v = int(raw)
+                if 2 <= v <= 12:
+                    return v
+                print("  Must be between 2 and 12.")
+            except ValueError:
+                print("  Enter a number.")
+
     def render_battle_result(self, state, result, wave=None):
         clear()
         print()
