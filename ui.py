@@ -185,7 +185,7 @@ class UI:
         print(row("Refugees",  state.refugees, 50000))
         print(row("Food",      state.food,     20,   " days"))
         print(row("Water",     state.water,    10,   " days"))
-        print(row("Morale",    state.morale,   100))
+        print(row("Morale",    int(state.morale),   100))
         print("  " + "-" * 68)
         print(f"  Enemy strength: ~{state.enemy_strength:,}    Rerolls: {state.rerolls}")
 

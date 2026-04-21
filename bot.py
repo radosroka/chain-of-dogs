@@ -82,7 +82,7 @@ def run():
         print(
             f"  Day {state.day:>3} | {action:<6} | {wp:<8} {progress:>4} "
             f"| sol={state.soldiers:>4} ref={state.refugees:>6,} "
-            f"food={state.food:>2} wat={state.water} mor={state.morale:>3}"
+            f"food={state.food:>2} wat={state.water} mor={int(state.morale):>3}"
         )
 
         if state.game_over:

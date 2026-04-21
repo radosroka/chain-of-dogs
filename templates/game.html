@@ -80,7 +80,7 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
   {{ bar_row("Refugees",  state.refugees, 50000) }}
   {{ bar_row("Food",      state.food,     20, " days") }}
   {{ bar_row("Water",     state.water,    10, " days") }}
-  {{ bar_row("Morale",    state.morale,   100) }}
+  {{ bar_row("Morale",    state.morale|int,   100) }}
   <hr>
   <div class="status-info">Enemy strength: ~{{ "{:,}".format(state.enemy_strength) }}</div>
   {% if state.difficulty != 'custom' %}
