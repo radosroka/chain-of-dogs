@@ -75,8 +75,14 @@ class EventSystem:
                 int(s.enemy_strength * d['attack_max']),
             )
             name = random.choice(ATTACK_NAMES)
-            s.add_log(f"ATTACK! {name} ({size:,} warriors)!")
-            return Event('attack', {'enemy_size': size, 'name': name})
+            intel = s.scout_intel
+            if intel:
+                s.add_log(f"ATTACK! {name} ({size:,} warriors)!")
+            else:
+                low = round(size * 0.6 / 500) * 500
+                high = round(size * 1.5 / 500) * 500
+                s.add_log(f"ATTACK! {name} (estimated {low:,}–{high:,} warriors)!")
+            return Event('attack', {'enemy_size': size, 'name': name, 'intel': intel})
 
         elif etype == 'heat_wave':
             s.water = max(0, s.water - 2)
@@ -111,6 +117,7 @@ class EventSystem:
             return Event('betrayal', {'message': msg})
 
         elif etype == 'scouts':
+            s.scout_intel = True
             msg = "Wickan scouts report large enemy forces massing ahead. Prepare for battle."
             s.add_log(msg)
             return Event('scouts', {'message': msg})
@@ -162,6 +169,8 @@ class EventSystem:
         s.total_soldiers_lost += soldier_losses
         s.total_refugees_lost += refugee_losses
         s.enemy_strength = max(0, s.enemy_strength - enemy_losses)
+
+        s.scout_intel = False
 
         if victory:
             s.morale = min(100, s.morale + 8)

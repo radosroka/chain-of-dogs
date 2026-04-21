@@ -123,12 +123,19 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
 
   <div class="box" style="border-color:#8b2020;">
     <div style="color:#cc4444; font-size:18px; letter-spacing:3px; margin-bottom:12px;">!! BATTLE !!</div>
+    {% if pb.intel %}
     <div style="margin-bottom:12px; color:#c9b99a;">{{ pb.name }} strikes with <strong>{{ "{:,}".format(pb.enemy_size) }}</strong> warriors!</div>
+    {% else %}
+    {% set low = ((pb.enemy_size * 0.6 / 500)|round|int) * 500 %}
+    {% set high = ((pb.enemy_size * 1.5 / 500)|round|int) * 500 %}
+    <div style="margin-bottom:4px; color:#c9b99a;">{{ pb.name }} attacks!</div>
+    <div style="margin-bottom:12px; color:#7a6a50; font-size:13px;">Estimated strength: <strong style="color:#c9b99a;">~{{ "{:,}".format(low) }}–{{ "{:,}".format(high) }}</strong> warriors &mdash; no scout intel.</div>
+    {% endif %}
 
     <div class="bar-row">
       <span class="bar-label" style="color:#cc6666;">Enemy</span>
       <div class="bar-track"><div class="bar-fill warn" style="width:{{ enemy_pct }}%;"></div></div>
-      <span class="bar-val">{{ "{:,}".format(pb.enemy_size) }}</span>
+      <span class="bar-val">{% if pb.intel %}{{ "{:,}".format(pb.enemy_size) }}{% else %}???{% endif %}</span>
     </div>
     <div class="bar-row">
       <span class="bar-label" style="color:#6699cc;">Yours</span>

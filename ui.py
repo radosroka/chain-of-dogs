@@ -197,7 +197,7 @@ class UI:
                 return action_map[choice]
             print("  Invalid choice. Enter 1-4 or q.")
 
-    def render_battle(self, state, enemy_size, enemy_name):
+    def render_battle(self, state, enemy_size, enemy_name, intel=True):
         clear()
         print()
         print("  +" + "=" * 66 + "+")
@@ -205,14 +205,23 @@ class UI:
         print("  +" + "=" * 66 + "+")
         print()
         print(f"  {enemy_name}")
-        print(f"  strikes with {enemy_size:,} warriors!")
+        if intel:
+            print(f"  strikes with {enemy_size:,} warriors!")
+        else:
+            low = round(enemy_size * 0.6 / 500) * 500
+            high = round(enemy_size * 1.5 / 500) * 500
+            print(f"  strikes with an estimated {low:,}–{high:,} warriors!")
+            print(f"  (No scout intel — exact strength unknown.)")
         print()
 
         max_force = max(enemy_size, state.soldiers, 1)
         enemy_bars = max(1, int(enemy_size / max_force * 40))
         player_bars = max(1, int(state.soldiers / max_force * 40))
 
-        print(f"  ENEMY  ({enemy_size:>7,}):  " + "#" * enemy_bars)
+        if intel:
+            print(f"  ENEMY  ({enemy_size:>7,}):  " + "#" * enemy_bars)
+        else:
+            print(f"  ENEMY  ({'?':>7}):  " + "#" * enemy_bars)
         print(f"  YOURS  ({state.soldiers:>7,}):  " + "+" * player_bars)
         print()
         print(f"  REFUGEE COLUMN: ~~~~~~~~~~~~~~~~~~~ ({state.refugees:,})")
@@ -323,8 +332,8 @@ class UI:
     def anim_forage(self):
         self._play(_FORAGE_FRAMES, delay=0.65)
 
-    def anim_attack_incoming(self, enemy_name, enemy_size, soldiers):
-        frames = _build_attack_frames(enemy_name, enemy_size, soldiers)
+    def anim_attack_incoming(self, enemy_name, enemy_size, soldiers, intel=True):
+        frames = _build_attack_frames(enemy_name, enemy_size, soldiers, intel)
         self._play(frames, delay=0.60)
 
     def anim_battle_clash(self):
@@ -520,11 +529,17 @@ r"""
 ]
 
 
-def _build_attack_frames(enemy_name, enemy_size, soldiers):
+def _build_attack_frames(enemy_name, enemy_size, soldiers, intel=True):
     bar_e = max(1, min(36, int(enemy_size / max(enemy_size, soldiers, 1) * 36)))
     bar_p = max(1, min(36, int(soldiers   / max(enemy_size, soldiers, 1) * 36)))
     e_bar = '#' * bar_e + '·' * (36 - bar_e)
     p_bar = '+' * bar_p + '·' * (36 - bar_p)
+    if intel:
+        e_label = f"{enemy_size:,}"
+    else:
+        low = round(enemy_size * 0.6 / 500) * 500
+        high = round(enemy_size * 1.5 / 500) * 500
+        e_label = f"~{low:,}–{high:,}?"
 
     return [
         f"""
@@ -532,7 +547,7 @@ def _build_attack_frames(enemy_name, enemy_size, soldiers):
 
   {enemy_name}
 
-  ENEMY  [{e_bar}]  {enemy_size:,}
+  ENEMY  [{e_bar}]  {e_label}
   YOURS  [{p_bar}]  {soldiers:,}
 
   >>>>>>>>                        <<<<<<<<
@@ -546,7 +561,7 @@ def _build_attack_frames(enemy_name, enemy_size, soldiers):
 
   {enemy_name}
 
-  ENEMY  [{e_bar}]  {enemy_size:,}
+  ENEMY  [{e_bar}]  {e_label}
   YOURS  [{p_bar}]  {soldiers:,}
 
        >>>>>>>>              <<<<<<<<
@@ -560,7 +575,7 @@ def _build_attack_frames(enemy_name, enemy_size, soldiers):
 
   {enemy_name}
 
-  ENEMY  [{e_bar}]  {enemy_size:,}
+  ENEMY  [{e_bar}]  {e_label}
   YOURS  [{p_bar}]  {soldiers:,}
 
               >>>>>>>>  <<<<<<<<

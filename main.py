@@ -204,8 +204,9 @@ def main():
         if event.type == 'attack':
             sounds.play_danger()
 
-            ui.anim_attack_incoming(event.data['name'], event.data['enemy_size'], state.soldiers)
-            tactic = ui.render_battle(state, event.data['enemy_size'], event.data['name'])
+            intel = event.data.get('intel', False)
+            ui.anim_attack_incoming(event.data['name'], event.data['enemy_size'], state.soldiers, intel)
+            tactic = ui.render_battle(state, event.data['enemy_size'], event.data['name'], intel)
             ui.anim_battle_clash()
             sounds.play_battle()
             result = events.resolve_battle(tactic, event.data['enemy_size'])
