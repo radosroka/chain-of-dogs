@@ -297,6 +297,26 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
           var _rerollsLeft = {{ battle_rerolls }};
           var _rerollsUsed = 0;
 
+          var _PIPS = {
+            1: ['     ','  o  ','     '],
+            2: [' o   ','     ','   o '],
+            3: [' o   ','  o  ','   o '],
+            4: [' o o ','     ',' o o '],
+            5: [' o o ','  o  ',' o o '],
+            6: [' o o ',' o o ',' o o '],
+          };
+
+          function diceFaceStr(n1, n2) {
+            var p1 = _PIPS[n1], p2 = _PIPS[n2];
+            return (
+              '  .-----.  .-----.\n' +
+              '  |' + p1[0] + '|  |' + p2[0] + '|\n' +
+              '  |' + p1[1] + '|  |' + p2[1] + '|\n' +
+              '  |' + p1[2] + '|  |' + p2[2] + '|\n' +
+              "  '-----'  '-----'"
+            );
+          }
+
           function rollDice(isReroll) {
             if (isReroll) {
               if (_rerollsLeft <= 0) return;
@@ -304,32 +324,51 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
               _rerollsUsed++;
               document.getElementById('rerolls_used').value = _rerollsUsed;
             }
+
             var d1 = Math.ceil(Math.random() * 6);
             var d2 = Math.ceil(Math.random() * 6);
             var total = d1 + d2;
-            document.getElementById('dice_roll').value = total;
-            document.getElementById('dice-display').textContent =
-              '  .-----.  .-----.\n' +
-              '  |     |  |     |\n' +
-              '  |  ' + d1 + '  |  |  ' + d2 + '  |\n' +
-              '  |     |  |     |\n' +
-              "  '-----'  '-----'";
-            document.getElementById('dice-result').textContent = d1 + ' + ' + d2 + ' = ' + total;
-            document.getElementById('dice-result').style.display = 'inline';
-            document.getElementById('roll-btn').style.display = 'none';
-            var rerollBtn = document.getElementById('reroll-btn');
-            if (_rerollsLeft > 0) {
-              document.getElementById('rerolls-left').textContent = _rerollsLeft;
-              rerollBtn.style.display = 'inline-block';
-            } else {
-              rerollBtn.style.display = 'none';
-            }
+
+            document.getElementById('roll-btn').disabled = true;
+            document.getElementById('roll-btn').style.opacity = '0.4';
+            document.getElementById('reroll-btn').style.display = 'none';
+            document.getElementById('dice-result').style.display = 'none';
             document.querySelectorAll('.tactic-grid button').forEach(function(b) {
-              b.disabled = false; b.style.opacity = '1';
+              b.disabled = true; b.style.opacity = '0.4';
             });
+
             var sfx = new Audio('/sounds/dice_roll.ogg');
             sfx.volume = 0.8;
             sfx.play().catch(function() {});
+
+            // Spin: fast → slow → land
+            var delays = [55,55,60,65,75,90,110,135,165,200,240,290,350,420];
+            var disp = document.getElementById('dice-display');
+
+            function frame(i) {
+              if (i < delays.length) {
+                disp.textContent = diceFaceStr(
+                  Math.ceil(Math.random()*6), Math.ceil(Math.random()*6)
+                );
+                setTimeout(function(){ frame(i+1); }, delays[i]);
+              } else {
+                // Land on result
+                disp.textContent = diceFaceStr(d1, d2);
+                document.getElementById('dice_roll').value = total;
+                document.getElementById('dice-result').textContent = d1 + ' + ' + d2 + ' = ' + total;
+                document.getElementById('dice-result').style.display = 'inline';
+                document.getElementById('roll-btn').style.display = 'none';
+                var rerollBtn = document.getElementById('reroll-btn');
+                if (_rerollsLeft > 0) {
+                  document.getElementById('rerolls-left').textContent = _rerollsLeft;
+                  rerollBtn.style.display = 'inline-block';
+                }
+                document.querySelectorAll('.tactic-grid button').forEach(function(b) {
+                  b.disabled = false; b.style.opacity = '1';
+                });
+              }
+            }
+            frame(0);
           }
 
           document.querySelectorAll('.tactic-grid button').forEach(function(b) {

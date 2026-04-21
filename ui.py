@@ -8,6 +8,24 @@ def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
+_DICE_PIPS = {
+    1: ["     ", "  o  ", "     "],
+    2: [" o   ", "     ", "   o "],
+    3: [" o   ", "  o  ", "   o "],
+    4: [" o o ", "     ", " o o "],
+    5: [" o o ", "  o  ", " o o "],
+    6: [" o o ", " o o ", " o o "],
+}
+
+def _dice_face(n):
+    r = _DICE_PIPS[n]
+    return [".-----.", f"|{r[0]}|", f"|{r[1]}|", f"|{r[2]}|", "'-----'"]
+
+def _two_dice(n1, n2):
+    f1, f2 = _dice_face(n1), _dice_face(n2)
+    return "\n".join(f"  {a}  {b}" for a, b in zip(f1, f2))
+
+
 def bar(value, maxv, width=20, fill='█', empty='░'):
     filled = max(0, min(width, int((value / max(1, maxv)) * width)))
     return fill * filled + empty * (width - filled)
@@ -274,19 +292,20 @@ class UI:
 
     def get_dice_roll(self, on_roll=None, rerolls=0, dice_mode='simulated'):
         import random
-        print()
-        print("  +-----------------------------------------+")
-        print("  |   ROLL 2d6 — the battle's fate awaits  |")
-        print("  |                                         |")
-        print("  |    .-----.  .-----.                     |")
-        print("  |    |     |  |     |                     |")
-        print("  |    |  ?  |  |  ?  |                     |")
-        print("  |    |     |  |     |                     |")
-        print("  |    '-----'  '-----'                     |")
-        print("  +-----------------------------------------+")
-        print()
+
+        def _show_prompt():
+            clear()
+            print()
+            print("  +------------------------------------------+")
+            print("  |   ROLL 2d6 — the battle's fate awaits   |")
+            print("  +------------------------------------------+")
+            print()
+            print(_two_dice(1, 1).replace("o", "?"))
+            print()
 
         while True:
+            _show_prompt()
+
             if dice_mode == 'physical':
                 while True:
                     raw = input("  Roll your dice and enter total (2-12): ").strip()
@@ -299,7 +318,16 @@ class UI:
                         print("  Enter a number.")
                 if on_roll:
                     on_roll()
-                print(f"\n  You entered: {total}\n")
+                # Minimal flash to show entered value
+                clear()
+                print()
+                print("  +------------------------------------------+")
+                print(f"  |   You entered: {total:<27}|")
+                print("  +------------------------------------------+")
+                print()
+                print(_two_dice(1, 1).replace("o", "?"))
+                print()
+
             else:
                 input("  [Press Enter to roll...]")
                 if on_roll:
@@ -307,13 +335,35 @@ class UI:
                 d1 = random.randint(1, 6)
                 d2 = random.randint(1, 6)
                 total = d1 + d2
-                print(f"\n  You rolled: [ {d1} ] + [ {d2} ] = {total}\n")
+
+                # Animation: spin fast → slow → land
+                schedule = [(0.06, 9), (0.10, 5), (0.17, 3), (0.28, 2), (0.40, 1)]
+                for delay, count in schedule:
+                    for _ in range(count):
+                        clear()
+                        print()
+                        print("  +------------------------------------------+")
+                        print("  |              R O L L I N G ...           |")
+                        print("  +------------------------------------------+")
+                        print()
+                        print(_two_dice(random.randint(1, 6), random.randint(1, 6)))
+                        print()
+                        time.sleep(delay)
+
+                # Final frame
+                clear()
+                print()
+                print("  +------------------------------------------+")
+                print(f"  |   You rolled: {d1} + {d2} = {total:<23}|")
+                print("  +------------------------------------------+")
+                print()
+                print(_two_dice(d1, d2))
+                print()
 
             if rerolls > 0:
                 choice = input(f"  [Enter] Accept  |  [R] Reroll ({rerolls} remaining): ").strip().lower()
                 if choice == 'r':
                     rerolls -= 1
-                    print()
                     continue
             else:
                 input("  [Press Enter to engage...]")
