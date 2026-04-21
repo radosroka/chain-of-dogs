@@ -145,9 +145,14 @@ def start():
     elif difficulty not in ('easy', 'normal', 'hard'):
         difficulty = 'normal'
 
+    dice_mode = request.form.get('dice_mode', 'simulated')
+    if dice_mode not in ('simulated', 'physical'):
+        dice_mode = 'simulated'
+
     session.clear()
     session['name'] = name
     state = GameState(difficulty, custom_diff)
+    state.dice_mode = dice_mode
     save_state(state)
     return redirect(url_for('game'))
 

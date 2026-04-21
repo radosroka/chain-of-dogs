@@ -95,6 +95,7 @@ class GameState:
         self.scout_intel = False     # True if scouts event preceded the next battle
         self.last_battle_day = 0     # day of most recent battle (0 = never fought)
         self.rerolls = d.get('rerolls', 0)
+        self.dice_mode = 'simulated'  # 'simulated' or 'physical'
 
     @property
     def diff(self):
@@ -125,6 +126,7 @@ class GameState:
             'scout_intel': self.scout_intel,
             'last_battle_day': self.last_battle_day,
             'rerolls': self.rerolls,
+            'dice_mode': self.dice_mode,
         }
 
     @classmethod

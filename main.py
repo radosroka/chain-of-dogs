@@ -157,15 +157,31 @@ def ask_difficulty():
         print("  Enter 1–4.")
 
 
+def ask_dice_mode():
+    clear()
+    print("\n  Choose dice mode:\n")
+    print("    [S] Simulated — press Enter, the game rolls for you")
+    print("    [P] Physical  — roll your own dice and enter the total\n")
+    while True:
+        choice = input("  > ").strip().lower()
+        if choice in ('s', ''):
+            return 'simulated'
+        if choice == 'p':
+            return 'physical'
+        print("  Enter S or P.")
+
+
 def main():
     ui = UI()
     name = ui.ask_name()
     difficulty, custom_diff = ask_difficulty()
+    dice_mode = ask_dice_mode()
     sounds.play_start()
     music.generate_all()
     music.play_ambient()
 
     state = GameState(difficulty, custom_diff)
+    state.dice_mode = dice_mode
     events = EventSystem(state)
 
     ui.show_intro()
@@ -219,7 +235,7 @@ def main():
             tactic = ui.render_battle(state, edata['enemy_size'], enemy_name, intel,
                                       weakness_tactic, weakness_hint, wave=wave_label,
                                       min_rolls=min_rolls)
-            dice_roll, state.rerolls = ui.get_dice_roll(sounds.play_dice_roll, rerolls=state.rerolls)
+            dice_roll, state.rerolls = ui.get_dice_roll(sounds.play_dice_roll, rerolls=state.rerolls, dice_mode=state.dice_mode)
             ui.anim_battle_clash()
             sounds.play_battle()
             result = events.resolve_battle(tactic, edata['enemy_size'], enemy_name, dice_roll=dice_roll)
@@ -236,7 +252,7 @@ def main():
                 tactic2 = ui.render_battle(state, wave2_size, enemy_name, intel,
                                            weakness_tactic, weakness_hint, wave=2,
                                            min_rolls=min_rolls2)
-                dice_roll2, state.rerolls = ui.get_dice_roll(sounds.play_dice_roll, rerolls=state.rerolls)
+                dice_roll2, state.rerolls = ui.get_dice_roll(sounds.play_dice_roll, rerolls=state.rerolls, dice_mode=state.dice_mode)
                 ui.anim_battle_clash()
                 sounds.play_battle()
                 result2 = events.resolve_battle(tactic2, wave2_size, enemy_name, dice_roll=dice_roll2)

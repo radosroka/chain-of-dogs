@@ -272,7 +272,7 @@ class UI:
                 return int(choice)
             print("  Choose 1-5.")
 
-    def get_dice_roll(self, on_roll=None, rerolls=0):
+    def get_dice_roll(self, on_roll=None, rerolls=0, dice_mode='simulated'):
         import random
         print()
         print("  +-----------------------------------------+")
@@ -285,14 +285,30 @@ class UI:
         print("  |    '-----'  '-----'                     |")
         print("  +-----------------------------------------+")
         print()
-        input("  [Press Enter to roll...]")
+
         while True:
-            if on_roll:
-                on_roll()
-            d1 = random.randint(1, 6)
-            d2 = random.randint(1, 6)
-            total = d1 + d2
-            print(f"\n  You rolled: [ {d1} ] + [ {d2} ] = {total}\n")
+            if dice_mode == 'physical':
+                while True:
+                    raw = input("  Roll your dice and enter total (2-12): ").strip()
+                    try:
+                        total = int(raw)
+                        if 2 <= total <= 12:
+                            break
+                        print("  Must be between 2 and 12.")
+                    except ValueError:
+                        print("  Enter a number.")
+                if on_roll:
+                    on_roll()
+                print(f"\n  You entered: {total}\n")
+            else:
+                input("  [Press Enter to roll...]")
+                if on_roll:
+                    on_roll()
+                d1 = random.randint(1, 6)
+                d2 = random.randint(1, 6)
+                total = d1 + d2
+                print(f"\n  You rolled: [ {d1} ] + [ {d2} ] = {total}\n")
+
             if rerolls > 0:
                 choice = input(f"  [Enter] Accept  |  [R] Reroll ({rerolls} remaining): ").strip().lower()
                 if choice == 'r':
