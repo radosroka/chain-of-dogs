@@ -304,9 +304,9 @@ class EventSystem:
         s.last_battle_day = s.day
 
         if victory:
-            s.morale = min(100, s.morale + 8)
+            s.morale = min(100, s.morale + s.diff.get('battle_morale_win', 8))
         else:
-            s.morale = max(0, s.morale - 8)
+            s.morale = max(0, s.morale - s.diff.get('battle_morale_loss', 8))
 
         msg = (
             f"Battle ({td['name']}): -{soldier_losses:,} soldiers, "

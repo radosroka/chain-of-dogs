@@ -3,31 +3,35 @@ DIFFICULTIES = {
         'soldiers':           3200,
         'food':               22,
         'water':              7,
-        'morale':             80,
+        'morale':             72,
         'march_r_loss':       0.001,
         'forced_r_loss':      0.004,
         'forced_s_loss':      0.007,
         'min_refugees':       200,
-        'attack_weight':      14,
-        'attack_day_bonus':   4,
+        'attack_weight':      21,
+        'attack_day_bonus':   6,
         'attack_min':         0.05,
         'attack_max':         0.18,
         'disease_min':        50,
         'disease_max':        300,
         'betrayal_morale':    -8,
         'threshold_mod':      -0.07,
-        'rerolls':            3,
+        'rerolls':            2,
+        'rest_morale':        9,
+        'morale_decay':       0.14,
+        'battle_morale_win':  8,
+        'battle_morale_loss': 11,
     },
     'normal': {
         'soldiers':           3200,
         'food':               20,
         'water':              5,
-        'morale':             75,
+        'morale':             73,
         'march_r_loss':       0.002,
         'forced_r_loss':      0.006,
         'forced_s_loss':      0.01,
         'min_refugees':       500,
-        'attack_weight':      20,
+        'attack_weight':      21,
         'attack_day_bonus':   8,
         'attack_min':         0.08,
         'attack_max':         0.25,
@@ -36,25 +40,33 @@ DIFFICULTIES = {
         'betrayal_morale':    -12,
         'threshold_mod':      0.0,
         'rerolls':            2,
+        'rest_morale':        9,
+        'morale_decay':       0.14,
+        'battle_morale_win':  8,
+        'battle_morale_loss': 9,
     },
     'hard': {
         'soldiers':           2800,
         'food':               14,
         'water':              3,
-        'morale':             72,
+        'morale':             70,
         'march_r_loss':       0.003,
         'forced_r_loss':      0.009,
         'forced_s_loss':      0.015,
         'min_refugees':       5000,
-        'attack_weight':      24,
-        'attack_day_bonus':   12,
+        'attack_weight':      19,
+        'attack_day_bonus':   5,
         'attack_min':         0.12,
         'attack_max':         0.35,
         'disease_min':        300,
         'disease_max':        1200,
         'betrayal_morale':    -14,
-        'threshold_mod':      0.05,
+        'threshold_mod':      0.0,
         'rerolls':            1,
+        'rest_morale':        7,
+        'morale_decay':       0.07,
+        'battle_morale_win':  7,
+        'battle_morale_loss': 7,
     },
 }
 
@@ -180,11 +192,17 @@ class GameState:
             else:
                 break
 
+    def _apply_morale_decay(self):
+        decay = self.diff.get('morale_decay', 0.0)
+        if decay > 0:
+            self.morale = max(0, self.morale - decay)
+
     def march(self):
         self.days_traveled += 1
         self.day += 1
         self.food = max(0, self.food - 1)
         self.water = max(0, self.water - 1)
+        self._apply_morale_decay()
         deaths = max(0, int(self.refugees * self.diff['march_r_loss']))
         self.refugees = max(0, self.refugees - deaths)
         self.total_refugees_lost += deaths
@@ -197,6 +215,7 @@ class GameState:
         self.day += 1
         self.food = max(0, self.food - 1)
         self.water = max(0, self.water - 2)
+        self._apply_morale_decay()
         self.morale = max(0, self.morale - 5)
         r = max(0, int(self.refugees * self.diff['forced_r_loss']))
         s = max(0, int(self.soldiers * self.diff['forced_s_loss']))
@@ -211,7 +230,8 @@ class GameState:
         self.day += 1
         self.food = max(0, self.food - 1)
         self.water = max(0, self.water - 1)
-        self.morale = min(100, self.morale + 10)
+        self._apply_morale_decay()
+        self.morale = min(100, self.morale + self.diff.get('rest_morale', 10))
         deaths = max(0, int(self.refugees * 0.0005))
         self.refugees = max(0, self.refugees - deaths)
         self.total_refugees_lost += deaths
@@ -221,6 +241,7 @@ class GameState:
         self.day += 1
         self.food = min(20, self.food + 4)
         self.water = min(10, self.water + 2)
+        self._apply_morale_decay()
         deaths = max(0, int(self.refugees * 0.001))
         self.refugees = max(0, self.refugees - deaths)
         self.total_refugees_lost += deaths
