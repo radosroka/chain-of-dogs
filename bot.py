@@ -28,11 +28,6 @@ def choose_action(state):
     return 'march'
 
 
-def calc_score(state):
-    bonus = 50000 if state.won else 0
-    return max(0, state.refugees + state.soldiers * 5 - state.day * 20 + bonus)
-
-
 def save_score(name, score, won):
     conn = sqlite3.connect(DB_FILE)
     conn.execute("""
@@ -112,7 +107,7 @@ def run():
 
     print()
     print("=" * 60)
-    score = calc_score(state)
+    score = state.calc_score()
     outcome = "VICTORY" if state.won else "DEFEAT"
     print(f"  {outcome} on day {state.day}")
     print(f"  Refugees surviving: {state.refugees:,}")

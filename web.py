@@ -67,11 +67,6 @@ def save_score(name, score, won, difficulty):
     return rank, scores
 
 
-def calc_score(state):
-    bonus = 50000 if state.won else 0
-    return max(0, state.refugees + state.soldiers * 5 - state.day * 20 + bonus)
-
-
 def get_state():
     return GameState.from_dict(session['state'])
 
@@ -232,7 +227,7 @@ def end():
     if not state.game_over:
         return redirect(url_for('game'))
     name = session.get('name', 'Unknown')
-    score = calc_score(state)
+    score = state.calc_score()
     end_anim = _VICTORY_FRAMES if state.won else _DEFEAT_FRAMES
     end_delay = 900 if state.won else 1100
     session.clear()

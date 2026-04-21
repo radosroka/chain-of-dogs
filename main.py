@@ -63,9 +63,6 @@ def save_score(name, score, won, difficulty):
     return rank, scores
 
 
-def calc_score(state):
-    bonus = 50000 if state.won else 0
-    return max(0, state.refugees + state.soldiers * 5 - state.day * 20 + bonus)
 
 
 ACTION_SOUNDS = {
@@ -224,7 +221,7 @@ def main():
                 ui.show_event_notification(state, msg)
 
     clear()
-    score = calc_score(state)
+    score = state.calc_score()
     music.stop()
 
     if state.difficulty == 'custom':

@@ -240,3 +240,7 @@ class GameState:
             self.game_over = True
             return True
         return False
+
+    def calc_score(self):
+        bonus = 50000 if self.won else 0
+        return max(0, self.refugees + self.soldiers * 5 - self.day * 20 + bonus)
