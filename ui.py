@@ -275,6 +275,8 @@ class UI:
                 return "  [cannot win]"
             if r == 2:
                 return "  [any roll wins]"
+            if r == 12:
+                return "  [critical only]"
             return f"  [need {r}+]"
 
         print(f"    [1] CHARGE        - Aggressive assault. Break their lines.{_roll_hint(1)}")
