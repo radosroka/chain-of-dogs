@@ -308,6 +308,15 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
             if (commitBtn) commitBtn.style.display = 'none';
             inp.focus();
           };
+
+          document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            var commitBtn = document.getElementById('commit-btn');
+            if (commitBtn && commitBtn.style.display !== 'none') {
+              e.preventDefault();
+              commitBtn.click();
+            }
+          });
         </script>
 
         {% else %}
@@ -410,6 +419,15 @@ window.ANIM_DELAYS = { march: 550, forced: 450, rest: 700, forage: 650, clash: 5
             }
             frame(0);
           };
+
+          document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            var commitBtn = document.getElementById('commit-btn');
+            if (commitBtn && commitBtn.style.display !== 'none') {
+              e.preventDefault();
+              commitBtn.click();
+            }
+          });
         </script>
         {% endif %}
 
