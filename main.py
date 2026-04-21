@@ -202,7 +202,7 @@ def main():
             continue
 
         if event.type == 'attack':
-            from events import FACTION_WEAKNESSES, FACTION_WEAKNESS_HINTS
+            from events import FACTION_WEAKNESSES, FACTION_WEAKNESS_HINTS, min_roll_for_victory
             sounds.play_danger()
 
             edata = event.data
@@ -214,9 +214,11 @@ def main():
 
             # ── Wave 1 ──────────────────────────────────────────────────
             wave_label = 1 if multi_wave else None
+            min_rolls = {t: min_roll_for_victory(state, t, edata['enemy_size']) for t in range(1, 5)}
             ui.anim_attack_incoming(enemy_name, edata['enemy_size'], state.soldiers, intel)
             tactic = ui.render_battle(state, edata['enemy_size'], enemy_name, intel,
-                                      weakness_tactic, weakness_hint, wave=wave_label)
+                                      weakness_tactic, weakness_hint, wave=wave_label,
+                                      min_rolls=min_rolls)
             dice_roll = ui.get_dice_roll(sounds.play_dice_roll)
             ui.anim_battle_clash()
             sounds.play_battle()
@@ -229,9 +231,11 @@ def main():
             # ── Wave 2 (only if multi-wave, wave 1 was a win, not a retreat, still alive) ──
             if multi_wave and result['victory'] and not result.get('retreated') and not state.game_over:
                 wave2_size = int(edata['enemy_size'] * 0.5)
+                min_rolls2 = {t: min_roll_for_victory(state, t, wave2_size) for t in range(1, 5)}
                 ui.anim_attack_incoming(enemy_name, wave2_size, state.soldiers, intel)
                 tactic2 = ui.render_battle(state, wave2_size, enemy_name, intel,
-                                           weakness_tactic, weakness_hint, wave=2)
+                                           weakness_tactic, weakness_hint, wave=2,
+                                           min_rolls=min_rolls2)
                 dice_roll2 = ui.get_dice_roll(sounds.play_dice_roll)
                 ui.anim_battle_clash()
                 sounds.play_battle()

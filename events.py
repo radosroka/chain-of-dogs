@@ -37,6 +37,37 @@ FACTION_WEAKNESS_HINTS = {
 }
 
 
+def min_roll_for_victory(state, tactic, enemy_size):
+    """Return the minimum 2d6 total needed for victory with this tactic.
+    Returns 2 if any roll wins, None if no roll can win."""
+    import math
+    td = TACTIC_DATA.get(tactic)
+    if td is None:
+        return None
+
+    force_ratio = state.soldiers / max(1, enemy_size)
+    morale_mod = state.morale / 100.0
+
+    victory_penalty = 0.0
+    if state.food == 0:
+        victory_penalty += 0.08
+    if state.water == 0:
+        victory_penalty += 0.10
+    days_gap = state.day - state.last_battle_day
+    if state.last_battle_day > 0 and days_gap < 3:
+        victory_penalty += (3 - days_gap) * 0.06
+
+    threshold = td['threshold'] + state.diff['threshold_mod']
+    needed_factor = (threshold + victory_penalty - force_ratio * 0.3 - morale_mod * 0.3) / 0.4
+    min_roll = math.floor(needed_factor * 10 + 2) + 1
+
+    if min_roll <= 2:
+        return 2
+    if min_roll > 12:
+        return None
+    return min_roll
+
+
 class Event:
     def __init__(self, etype, data=None):
         self.type = etype

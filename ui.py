@@ -198,7 +198,7 @@ class UI:
             print("  Invalid choice. Enter 1-4 or q.")
 
     def render_battle(self, state, enemy_size, enemy_name, intel=True,
-                      weakness_tactic=None, weakness_hint=None, wave=None):
+                      weakness_tactic=None, weakness_hint=None, wave=None, min_rolls=None):
         clear()
         print()
         print("  +" + "=" * 66 + "+")
@@ -249,11 +249,21 @@ class UI:
         print("  " + "-" * 66)
         print("  CHOOSE YOUR TACTIC:")
         print()
-        print("    [1] CHARGE        - Aggressive assault. Break their lines.")
-        print("    [2] HOLD THE LINE - Defensive formation. Protect the column.")
-        print("    [3] WICKAN FEINT  - Cavalry draws enemy. Column slips through.")
-        print("    [4] NIGHT ASSAULT - Strike in darkness. High risk, high reward.")
-        print("    [5] DISENGAGE     - Retreat. Refugees scatter (chaos), morale drops.")
+        def _roll_hint(t):
+            if not min_rolls:
+                return ""
+            r = min_rolls.get(t)
+            if r is None:
+                return "  [cannot win]"
+            if r == 2:
+                return "  [any roll wins]"
+            return f"  [need {r}+]"
+
+        print(f"    [1] CHARGE        - Aggressive assault. Break their lines.{_roll_hint(1)}")
+        print(f"    [2] HOLD THE LINE - Defensive formation. Protect the column.{_roll_hint(2)}")
+        print(f"    [3] WICKAN FEINT  - Cavalry draws enemy. Column slips through.{_roll_hint(3)}")
+        print(f"    [4] NIGHT ASSAULT - Strike in darkness. High risk, high reward.{_roll_hint(4)}")
+        print( "    [5] DISENGAGE     - Retreat. Refugees scatter (chaos), morale drops.")
         print()
 
         while True:
@@ -282,6 +292,7 @@ class UI:
         d2 = random.randint(1, 6)
         total = d1 + d2
         print(f"\n  You rolled: [ {d1} ] + [ {d2} ] = {total}\n")
+        input("  [Press Enter to engage...]")
         return total
 
     def render_battle_result(self, state, result, wave=None):
